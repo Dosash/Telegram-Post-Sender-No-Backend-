@@ -80,6 +80,15 @@
     .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .btn-row input { min-width: 180px; flex: 1; }
     .footer-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    #chatList { display: grid; gap: 8px; }
+    #chatList.two-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .chat-item-main { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .chat-item-main input[type="checkbox"] { width: auto; }
+    .item.selected {
+      border-color: #1f9d7a;
+      background: #e9f9f3;
+      box-shadow: inset 0 0 0 1px rgba(31,157,122,0.18);
+    }
   </style>
 </head>
 <body>
@@ -111,6 +120,8 @@
       </div>
       <div class="row" style="margin-top:8px;">
         <button id="addChat">Добавить</button>
+        <button id="selectAllChats" class="secondary">Выбрать все</button>
+        <button id="clearSelection" class="ghost">Снять выбор</button>
         <button id="clearChats" class="ghost">Очистить список</button>
       </div>
       <div id="chatList" class="list" style="margin-top:10px;"></div>
@@ -252,20 +263,48 @@
       statusEl.scrollTop = statusEl.scrollHeight;
     }
 
+    function normalizeChats(raw) {
+      if (!Array.isArray(raw)) return [];
+      return raw.map((item) => {
+        if (typeof item === "string") return { id: item, selected: true };
+        return {
+          id: String(item?.id || "").trim(),
+          selected: item?.selected !== false
+        };
+      }).filter(x => x.id);
+    }
+
+    function saveChats() {
+      saveLS(LS_CHATS, chats);
+    }
+
     function renderChats() {
-      chatListEl.innerHTML = '';
+      chatListEl.innerHTML = "";
+      chatListEl.classList.toggle("two-cols", chats.length > 5);
+
       chats.forEach((chat, idx) => {
-        const row = document.createElement('div');
-        row.className = 'item';
-        row.innerHTML = `<span>${chat}</span><button class="danger" data-i="${idx}">Удалить</button>`;
-        row.querySelector('button').onclick = () => {
+        const row = document.createElement("div");
+        row.className = `item${chat.selected ? " selected" : ""}`;
+        row.innerHTML = `<div class="chat-item-main"><input type="checkbox" ${chat.selected ? "checked" : ""} data-a="check" /><span>${escapeHtml(chat.id)}</span></div><button class="danger" data-a="del">Удалить</button>`;
+
+        row.querySelector('[data-a="check"]').onchange = (e) => {
+          chats[idx].selected = e.target.checked;
+          saveChats();
+        };
+
+        row.querySelector('[data-a="del"]').onclick = () => {
           chats.splice(idx, 1);
-          saveLS(LS_CHATS, chats);
+          saveChats();
           renderChats();
         };
+
         chatListEl.appendChild(row);
       });
-      if (!chats.length) chatListEl.innerHTML = '<p class="muted">Список пуст</p>';
+
+      if (!chats.length) {
+        chatListEl.classList.remove("two-cols");
+        chatListEl.innerHTML = '<p class="muted">Список пуст</p>';
+      }
     }
 
     function renderButtons() {
@@ -494,18 +533,30 @@
       log('Токен удален');
     };
 
-    document.getElementById('addChat').onclick = () => {
+    document.getElementById("addChat").onclick = () => {
       const v = chatInputEl.value.trim();
       if (!v) return;
-      if (!chats.includes(v)) chats.push(v);
-      chatInputEl.value = '';
-      saveLS(LS_CHATS, chats);
+      if (!chats.some(c => c.id === v)) chats.push({ id: v, selected: true });
+      chatInputEl.value = "";
+      saveChats();
       renderChats();
     };
 
-    document.getElementById('clearChats').onclick = () => {
+    document.getElementById("selectAllChats").onclick = () => {
+      chats.forEach(c => { c.selected = true; });
+      saveChats();
+      renderChats();
+    };
+
+    document.getElementById("clearSelection").onclick = () => {
+      chats.forEach(c => { c.selected = false; });
+      saveChats();
+      renderChats();
+    };
+
+    document.getElementById("clearChats").onclick = () => {
       chats = [];
-      saveLS(LS_CHATS, chats);
+      saveChats();
       renderChats();
     };
 
@@ -534,31 +585,48 @@
       templateNameEl.value = '';
       log(`Шаблон "${name}" сохранен`);
     };
+    function randomDelayMs(minMs, maxMs) {
+      return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+    }
 
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
     document.getElementById('sendAll').onclick = async () => {
       statusEl.textContent = '';
       const token = tokenEl.value.trim();
       if (!token) return alert('Введите токен');
       if (!chats.length) return alert('Добавьте хотя бы один чат/канал');
 
-      const data = readFormData();
-      log(`Старт отправки в ${chats.length} чат(ов)`);
+      const selectedChats = chats.filter(c => c.selected).map(c => c.id);
+      if (!selectedChats.length) return alert('Выберите хотя бы один канал/чат для отправки');
 
-      await Promise.all(chats.map(async (chatId) => {
+      const data = readFormData();
+      log(`Старт отправки в ${selectedChats.length} выбранных чат(ов)`);
+
+      for (let i = 0; i < selectedChats.length; i += 1) {
+        const chatId = selectedChats[i];
+
         try {
           await sendToChat(token, chatId, data);
           log(`[OK] ${chatId}`);
         } catch (e) {
           log(`[ERR] ${chatId} -> ${e.message}`);
         }
-      }));
+
+        if (i < selectedChats.length - 1) {
+          const waitMs = randomDelayMs(5000, 7000);
+          log(`Пауза ${Math.round(waitMs / 1000)} сек перед следующим чатом...`);
+          await sleep(waitMs);
+        }
+      }
 
       log('Готово');
     };
 
     function init() {
       tokenEl.value = decodeURIComponent(getCookie(COOKIE_TOKEN) || '');
-      chats = loadLS(LS_CHATS, []);
+      chats = normalizeChats(loadLS(LS_CHATS, []));
       templates = loadLS(LS_TEMPLATES, []);
       renderChats();
       renderButtons();
@@ -570,3 +638,7 @@
   </script>
 </body>
 </html>
+
+
+
+
