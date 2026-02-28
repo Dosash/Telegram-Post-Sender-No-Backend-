@@ -181,7 +181,7 @@
         <button id="addButton" class="secondary">Добавить кнопку</button>
         <button id="clearButtons" class="ghost">Очистить кнопки</button>
       </div>
-      <p class="muted">Каждая строка: Текст, URL, номер ряда. Кнопки с одинаковым рядом идут в одну линию.</p>
+      <p class="muted">Каждая строка: Текст, URL, номер ряда, стиль (цвет). Кнопки с одинаковым рядом идут в одну линию.</p>
       <div id="buttonBuilder" class="btn-grid" style="margin-top:10px;"></div>
     </div>
 
@@ -308,32 +308,43 @@
     }
 
     function renderButtons() {
-      buttonBuilderEl.innerHTML = '';
-      buttons.forEach((btn, idx) => {
-        const row = document.createElement('div');
-        row.className = 'btn-row';
-        row.innerHTML = `
-          <input placeholder="Текст" value="${escapeHtml(btn.text)}" data-f="text" />
-          <input placeholder="URL" value="${escapeHtml(btn.url)}" data-f="url" />
-          <input placeholder="Ряд" type="number" min="1" value="${btn.row}" data-f="row" style="max-width:90px;" />
-          <button class="danger">X</button>
-        `;
-        row.querySelectorAll('input').forEach(inp => {
-          inp.oninput = (e) => {
-            const f = e.target.dataset.f;
-            buttons[idx][f] = f === 'row' ? Math.max(1, Number(e.target.value || 1)) : e.target.value;
-          };
-        });
-        row.querySelector('button').onclick = () => {
-          buttons.splice(idx, 1);
-          renderButtons();
-        };
-        buttonBuilderEl.appendChild(row);
-      });
-      if (!buttons.length) buttonBuilderEl.innerHTML = '<p class="muted">Кнопок нет</p>';
-    }
+  buttonBuilderEl.innerHTML = '';
+  buttons.forEach((btn, idx) => {
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+    const styleVal = (btn.style || '').trim();
+    row.innerHTML = `
+      <input placeholder="Текст" value="${escapeHtml(btn.text)}" data-f="text" />
+      <input placeholder="URL" value="${escapeHtml(btn.url)}" data-f="url" />
+      <input placeholder="Ряд" type="number" min="1" value="${btn.row}" data-f="row" style="max-width:90px;" />
+      <select data-f="style" style="max-width:170px;">
+        <option value="">Стандарт</option>
+        <option value="primary" ${styleVal === 'primary' ? 'selected' : ''}>primary (синяя)</option>
+        <option value="success" ${styleVal === 'success' ? 'selected' : ''}>success (зелёная)</option>
+        <option value="danger" ${styleVal === 'danger' ? 'selected' : ''}>danger (красная)</option>
+      </select>
+      <button class="danger">X</button>
+    `;
+    row.querySelectorAll('input, select').forEach(el => {
+      const handler = (e) => {
+        const f = e.target.dataset.f;
+        buttons[idx][f] = f === 'row'
+          ? Math.max(1, Number(e.target.value || 1))
+          : e.target.value;
+      };
+      el.oninput = handler;
+      el.onchange = handler;
+    });
+    row.querySelector('button').onclick = () => {
+      buttons.splice(idx, 1);
+      renderButtons();
+    };
+    buttonBuilderEl.appendChild(row);
+  });
+  if (!buttons.length) buttonBuilderEl.innerHTML = '<p class="muted">Кнопок нет</p>';
+}
 
-    function escapeHtml(s) {
+function escapeHtml(s) {
       return (s || '')
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -342,19 +353,29 @@
     }
 
     function buildReplyMarkup() {
-      const valid = buttons.filter(b => b.text.trim() && b.url.trim());
-      if (!valid.length) return null;
-      const rows = {};
-      valid.forEach(b => {
-        const key = String(Math.max(1, Number(b.row) || 1));
-        if (!rows[key]) rows[key] = [];
-        rows[key].push({ text: b.text.trim(), url: b.url.trim() });
-      });
-      const inline_keyboard = Object.keys(rows).sort((a, b) => Number(a) - Number(b)).map(k => rows[k]);
-      return { inline_keyboard };
-    }
+  const valid = buttons.filter(b => (b.text || '').trim() && (b.url || '').trim());
+  if (!valid.length) return null;
 
-    function readFormData() {
+  const rows = {};
+  valid.forEach(b => {
+    const key = String(Math.max(1, Number(b.row) || 1));
+    if (!rows[key]) rows[key] = [];
+
+    const item = { text: String(b.text).trim(), url: String(b.url).trim() };
+    const style = String(b.style || '').trim();
+    if (['primary', 'success', 'danger'].includes(style)) item.style = style;
+
+    rows[key].push(item);
+  });
+
+  const inline_keyboard = Object.keys(rows)
+    .sort((a, b) => Number(a) - Number(b))
+    .map(k => rows[k]);
+
+  return { inline_keyboard };
+}
+
+function readFormData() {
       return {
         message: messageEl.value,
         mode: modeEl.value,
@@ -561,7 +582,7 @@
     };
 
     document.getElementById('addButton').onclick = () => {
-      buttons.push({ text: '', url: '', row: 1 });
+      buttons.push({ text: '', url: '', row: 1, style: '' });
       renderButtons();
     };
 
