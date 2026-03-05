@@ -178,10 +178,17 @@
     <div class="card">
       <h2>4) Конструктор кнопок</h2>
       <div class="row">
+        <div class="col" style="max-width:220px;">
+          <label for="buttonsPerRow">Кнопок в ряд</label>
+          <input id="buttonsPerRow" type="number" min="1" max="8" value="1" />
+        </div>
+      </div>
+      <div class="row">
         <button id="addButton" class="secondary">Добавить кнопку</button>
         <button id="clearButtons" class="ghost">Очистить кнопки</button>
       </div>
-      <p class="muted">Каждая строка: Текст, URL, номер ряда, стиль (цвет). Кнопки с одинаковым рядом идут в одну линию.</p>
+      <p class="muted">Каждая строка: Текст, URL, стиль (цвет). Кнопки автоматически раскладываются по рядам слева направо.</p>
+      <p class="muted">Мини‑инструкция: чтобы получить 2 кнопки в 2 ряда, установите «Кнопок в ряд» = 2 и добавьте 4 кнопки — раскладка будет 2 + 2.</p>
       <div id="buttonBuilder" class="btn-grid" style="margin-top:10px;"></div>
     </div>
 
@@ -224,6 +231,7 @@
     const photoFileEl = document.getElementById('photoFile');
     const albumUrlsEl = document.getElementById('albumUrls');
     const albumFilesEl = document.getElementById('albumFiles');
+    const buttonsPerRowEl = document.getElementById('buttonsPerRow');
     const buttonBuilderEl = document.getElementById('buttonBuilder');
     const templateNameEl = document.getElementById('templateName');
     const templateListEl = document.getElementById('templateList');
@@ -316,7 +324,6 @@
     row.innerHTML = `
       <input placeholder="Текст" value="${escapeHtml(btn.text)}" data-f="text" />
       <input placeholder="URL" value="${escapeHtml(btn.url)}" data-f="url" />
-      <input placeholder="Ряд" type="number" min="1" value="${btn.row}" data-f="row" style="max-width:90px;" />
       <select data-f="style" style="max-width:170px;">
         <option value="">Стандарт</option>
         <option value="primary" ${styleVal === 'primary' ? 'selected' : ''}>primary (синяя)</option>
@@ -328,9 +335,7 @@
     row.querySelectorAll('input, select').forEach(el => {
       const handler = (e) => {
         const f = e.target.dataset.f;
-        buttons[idx][f] = f === 'row'
-          ? Math.max(1, Number(e.target.value || 1))
-          : e.target.value;
+        buttons[idx][f] = e.target.value;
       };
       el.oninput = handler;
       el.onchange = handler;
@@ -352,30 +357,49 @@ function escapeHtml(s) {
         .replaceAll('"', '&quot;');
     }
 
+    function escapeMarkdownV2(text) {
+      const source = String(text || '');
+      return source
+        .replaceAll('\\', '\\\\')
+        .replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+    }
+
+    function normalizeHtmlForTelegram(text) {
+      return String(text || '')
+        .replace(/<\s*br\s*\/?>/gi, '\n');
+    }
+
+    function normalizeTextForParseMode(text, parseMode) {
+      if ((parseMode || '') === 'MarkdownV2') {
+        return escapeMarkdownV2(text);
+      }
+      if ((parseMode || '') === 'HTML') {
+        return normalizeHtmlForTelegram(text);
+      }
+      return String(text || '');
+    }
+
     function buildReplyMarkup() {
   const valid = buttons.filter(b => (b.text || '').trim() && (b.url || '').trim());
   if (!valid.length) return null;
 
-  const rows = {};
-  valid.forEach(b => {
-    const key = String(Math.max(1, Number(b.row) || 1));
-    if (!rows[key]) rows[key] = [];
-
+  const perRow = Math.max(1, Math.min(8, Number(buttonsPerRowEl.value) || 1));
+  const prepared = valid.map((b) => {
     const item = { text: String(b.text).trim(), url: String(b.url).trim() };
     const style = String(b.style || '').trim();
     if (['primary', 'success', 'danger'].includes(style)) item.style = style;
-
-    rows[key].push(item);
+    return item;
   });
 
-  const inline_keyboard = Object.keys(rows)
-    .sort((a, b) => Number(a) - Number(b))
-    .map(k => rows[k]);
+  const inline_keyboard = [];
+  for (let i = 0; i < prepared.length; i += perRow) {
+    inline_keyboard.push(prepared.slice(i, i + perRow));
+  }
 
   return { inline_keyboard };
 }
 
-function readFormData() {
+    function readFormData() {
       return {
         message: messageEl.value,
         mode: modeEl.value,
@@ -384,6 +408,7 @@ function readFormData() {
         photoFile: photoFileEl.files[0] || null,
         albumUrls: albumUrlsEl.value.split('\n').map(s => s.trim()).filter(Boolean),
         albumFiles: Array.from(albumFilesEl.files || []),
+        buttonsPerRow: Math.max(1, Math.min(8, Number(buttonsPerRowEl.value) || 1)),
         buttons: structuredClone(buttons)
       };
     }
@@ -394,6 +419,7 @@ function readFormData() {
       parseModeEl.value = tpl.parse_mode || '';
       photoUrlEl.value = tpl.photoUrl || '';
       albumUrlsEl.value = (tpl.albumUrls || []).join('\n');
+      buttonsPerRowEl.value = String(Math.max(1, Math.min(8, Number(tpl.buttonsPerRow) || 1)));
       photoFileEl.value = '';
       albumFilesEl.value = '';
       buttons = structuredClone(tpl.buttons || []);
@@ -446,11 +472,12 @@ function readFormData() {
 
     async function sendToChat(token, chatId, data) {
       const reply_markup = buildReplyMarkup();
+      const normalizedMessage = normalizeTextForParseMode(data.message || '', data.parse_mode);
 
       if (data.mode === 'text') {
         const payload = {
           chat_id: chatId,
-          text: data.message || ' ',
+          text: normalizedMessage || ' ',
           parse_mode: data.parse_mode
         };
         if (reply_markup) payload.reply_markup = reply_markup;
@@ -461,7 +488,7 @@ function readFormData() {
       if (data.mode === 'photo') {
         const payload = {
           chat_id: chatId,
-          caption: data.message || '',
+          caption: normalizedMessage,
           parse_mode: data.parse_mode
         };
         if (reply_markup) payload.reply_markup = reply_markup;
@@ -495,8 +522,8 @@ function readFormData() {
 
           data.albumUrls.forEach((url, i) => {
             const item = { type: 'photo', media: url };
-            if (i === 0 && !data.albumFiles.length && data.message) {
-              item.caption = data.message;
+            if (i === 0 && !data.albumFiles.length && normalizedMessage) {
+              item.caption = normalizedMessage;
               if (data.parse_mode) item.parse_mode = data.parse_mode;
             }
             media.push(item);
@@ -505,8 +532,8 @@ function readFormData() {
           data.albumFiles.forEach((file, i) => {
             const attachName = `file${i}`;
             const item = { type: 'photo', media: `attach://${attachName}` };
-            if (media.length === 0 && i === 0 && data.message) {
-              item.caption = data.message;
+            if (media.length === 0 && i === 0 && normalizedMessage) {
+              item.caption = normalizedMessage;
               if (data.parse_mode) item.parse_mode = data.parse_mode;
             }
             media.push(item);
@@ -519,8 +546,8 @@ function readFormData() {
         } else {
           const media = data.albumUrls.map((url, i) => {
             const item = { type: 'photo', media: url };
-            if (i === 0 && data.message) {
-              item.caption = data.message;
+            if (i === 0 && normalizedMessage) {
+              item.caption = normalizedMessage;
               if (data.parse_mode) item.parse_mode = data.parse_mode;
             }
             return item;
@@ -582,7 +609,7 @@ function readFormData() {
     };
 
     document.getElementById('addButton').onclick = () => {
-      buttons.push({ text: '', url: '', row: 1, style: '' });
+      buttons.push({ text: '', url: '', style: '' });
       renderButtons();
     };
 
@@ -659,7 +686,4 @@ function readFormData() {
   </script>
 </body>
 </html>
-
-
-
 
