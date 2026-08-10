@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -6,684 +6,2091 @@
   <title>Telegram Post Sender</title>
   <style>
     :root {
-      --bg: #f4f6fb;
-      --card: #ffffff;
+      color-scheme: light;
+      --bg: #eef1f8;
+      --bg-glow-1: #d2f4e6;
+      --bg-glow-2: #d6ecff;
+      --surface: #ffffff;
+      --surface-2: #f7f9fd;
+      --surface-3: #eef2fa;
       --text: #16213a;
-      --muted: #60708f;
+      --muted: #64748b;
+      --border: #dbe2ee;
+      --border-strong: #c3cede;
       --accent: #1f9d7a;
-      --accent-2: #0e6f8f;
+      --accent-hover: #178664;
+      --accent-soft: #e8f7f1;
+      --info: #0e6f8f;
+      --info-soft: #e6f2f8;
       --danger: #c03838;
-      --border: #d9e0ec;
+      --danger-soft: #fbeaea;
+      --warning: #a76a08;
+      --warning-soft: #fdf3e2;
+      --on-accent: #ffffff;
+      --code-bg: #0f1b2f;
+      --code-text: #d8e4ff;
+      --radius: 14px;
+      --radius-sm: 10px;
       --shadow: 0 10px 26px rgba(14, 29, 54, 0.09);
+      --shadow-sm: 0 2px 8px rgba(14, 29, 54, 0.06);
     }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #0d1320;
+        --bg-glow-1: #123028;
+        --bg-glow-2: #10283a;
+        --surface: #161e2e;
+        --surface-2: #1b2434;
+        --surface-3: #212c3f;
+        --text: #e6ecf7;
+        --muted: #94a3b8;
+        --border: #2a3547;
+        --border-strong: #3a4759;
+        --accent: #2bb98f;
+        --accent-hover: #35cfa1;
+        --accent-soft: #16342b;
+        --info: #3aa3c7;
+        --info-soft: #142c38;
+        --danger: #e06565;
+        --danger-soft: #351f1f;
+        --warning: #e0a94c;
+        --warning-soft: #33290f;
+        --on-accent: #06231b;
+        --code-bg: #0a1120;
+        --code-text: #c9d8f5;
+        --shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0d1320;
+      --bg-glow-1: #123028;
+      --bg-glow-2: #10283a;
+      --surface: #161e2e;
+      --surface-2: #1b2434;
+      --surface-3: #212c3f;
+      --text: #e6ecf7;
+      --muted: #94a3b8;
+      --border: #2a3547;
+      --border-strong: #3a4759;
+      --accent: #2bb98f;
+      --accent-hover: #35cfa1;
+      --accent-soft: #16342b;
+      --info: #3aa3c7;
+      --info-soft: #142c38;
+      --danger: #e06565;
+      --danger-soft: #351f1f;
+      --warning: #e0a94c;
+      --warning-soft: #33290f;
+      --on-accent: #06231b;
+      --code-bg: #0a1120;
+      --code-text: #c9d8f5;
+      --shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      font-family: "Segoe UI", "Tahoma", sans-serif;
+      font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
       color: var(--text);
       background:
-        radial-gradient(circle at 12% 12%, #d2f4e6 0%, transparent 28%),
-        radial-gradient(circle at 88% 2%, #d6ecff 0%, transparent 24%),
+        radial-gradient(circle at 12% 10%, var(--bg-glow-1) 0%, transparent 26%),
+        radial-gradient(circle at 88% 2%, var(--bg-glow-2) 0%, transparent 22%),
         var(--bg);
+      background-attachment: fixed;
+      min-height: 100vh;
     }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
-    .card {
-      background: var(--card);
+
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 18px; }
+
+    /* ---------- шапка ---------- */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .topbar h1 { font-size: 22px; margin: 0; flex: 1; min-width: 220px; }
+    .brand-sub { display: block; font-size: 13px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+    .bot-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      color: var(--muted);
+    }
+    .bot-badge.ok { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .bot-badge.err { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+
+    /* ---------- сетка ---------- */
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
+    @media (max-width: 1020px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+    .side { position: sticky; top: 18px; display: flex; flex-direction: column; gap: 16px; }
+    @media (max-width: 1020px) { .side { position: static; } }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 16px;
       margin-bottom: 16px;
     }
-    h1, h2 { margin: 0 0 12px; }
-    h1 { font-size: 24px; }
-    h2 { font-size: 18px; }
+    .side .card { margin-bottom: 0; }
+
+    .card > h2 {
+      margin: 0 0 12px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step {
+      display: inline-grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      flex: none;
+    }
+    .h2-tail { margin-left: auto; font-size: 12px; font-weight: 400; color: var(--muted); }
+
+    /* ---------- формы ---------- */
     .row { display: flex; gap: 10px; flex-wrap: wrap; }
-    .col { flex: 1; min-width: 240px; }
+    .row + .row { margin-top: 10px; }
+    .col { flex: 1; min-width: 220px; }
     label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
+
     input, textarea, select {
       width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 10px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
       padding: 9px 10px;
       font-size: 14px;
       font-family: inherit;
-      background: #fff;
+      background: var(--surface-2);
+      color: var(--text);
+      transition: border-color .15s, box-shadow .15s;
     }
-    textarea { min-height: 110px; resize: vertical; }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    input[type="file"] { padding: 7px 10px; background: var(--surface-3); cursor: pointer; }
+    input[type="checkbox"] { width: auto; }
+    textarea { min-height: 130px; resize: vertical; line-height: 1.45; }
+    input.invalid, textarea.invalid { border-color: var(--danger); }
+
     button {
-      border: none;
-      border-radius: 10px;
-      padding: 9px 12px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 9px 13px;
       font-size: 14px;
+      font-family: inherit;
       cursor: pointer;
       background: var(--accent);
-      color: #fff;
+      color: var(--on-accent);
+      font-weight: 600;
+      transition: background .15s, transform .05s, opacity .15s;
     }
-    button.secondary { background: var(--accent-2); }
-    button.ghost { background: #eaf0fb; color: #264167; }
-    button.danger { background: var(--danger); }
-    .muted { color: var(--muted); font-size: 13px; }
+    button:hover:not(:disabled) { background: var(--accent-hover); }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.secondary { background: var(--info); color: #fff; }
+    button.secondary:hover:not(:disabled) { filter: brightness(1.08); }
+    button.ghost { background: var(--surface-3); color: var(--text); border-color: var(--border); font-weight: 500; }
+    button.ghost:hover:not(:disabled) { background: var(--border); }
+    button.danger { background: var(--danger); color: #fff; }
+    button.danger:hover:not(:disabled) { filter: brightness(1.08); }
+    button.icon { padding: 6px 9px; font-size: 13px; line-height: 1; }
+    button.big { padding: 12px 18px; font-size: 15px; }
+
+    .muted { color: var(--muted); font-size: 13px; margin: 8px 0 0; line-height: 1.5; }
+    code {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: .92em;
+      background: var(--surface-3);
+      border-radius: 5px;
+      padding: 1px 5px;
+    }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    .toggle-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; }
+    .toggle { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text); cursor: pointer; }
+    .toggle input { margin: 0; }
+
+    .banner {
+      display: none;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 12px;
+      background: var(--warning-soft);
+      border: 1px solid var(--warning);
+      color: var(--warning);
+    }
+    .banner.show { display: block; }
+
+    /* ---------- списки ---------- */
     .list { display: flex; flex-direction: column; gap: 8px; }
     .item {
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px;
-      background: #fbfcff;
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      background: var(--surface-2);
       display: flex;
       gap: 8px;
       align-items: center;
     }
-    .item span { flex: 1; word-break: break-all; }
-    .status { white-space: pre-wrap; font-size: 13px; background: #0f1b2f; color: #d8e4ff; padding: 10px; border-radius: 10px; min-height: 90px; }
-    .btn-grid { display: flex; flex-direction: column; gap: 8px; }
-    .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .btn-row input { min-width: 180px; flex: 1; }
-    .footer-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .item.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent);
+    }
+    .empty { color: var(--muted); font-size: 13px; padding: 10px; text-align: center; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); }
+
     #chatList { display: grid; gap: 8px; }
     #chatList.two-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .chat-item-main { display: flex; align-items: center; gap: 8px; flex: 1; }
-    .chat-item-main input[type="checkbox"] { width: auto; }
-    .item.selected {
-      border-color: #1f9d7a;
-      background: #e9f9f3;
-      box-shadow: inset 0 0 0 1px rgba(31,157,122,0.18);
+    @media (max-width: 620px) { #chatList.two-cols { grid-template-columns: minmax(0, 1fr); } }
+    .chat-main { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; }
+    .chat-text { min-width: 0; flex: 1; }
+    .chat-title { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chat-id { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chat-tag { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); border: 1px solid var(--border-strong); border-radius: 999px; padding: 1px 6px; flex: none; }
+
+    /* ---------- конструктор кнопок ---------- */
+    .btn-grid { display: flex; flex-direction: column; gap: 8px; }
+    .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .btn-row .f-text { flex: 1 1 150px; min-width: 120px; }
+    .btn-row .f-url { flex: 2 1 220px; min-width: 160px; }
+    .btn-row .f-emoji { flex: 0 0 96px; }
+    .btn-row .move { display: flex; gap: 4px; }
+
+    /* ---------- панель форматирования ---------- */
+    .toolbar { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+    .toolbar button {
+      background: var(--surface-3);
+      color: var(--text);
+      border-color: var(--border);
+      font-weight: 500;
+      padding: 5px 10px;
+      font-size: 13px;
+      min-width: 32px;
+    }
+    .toolbar button:hover:not(:disabled) { background: var(--border); }
+    .counter { font-size: 12px; color: var(--muted); text-align: right; margin-top: 4px; }
+    .counter.warn { color: var(--warning); }
+    .counter.over { color: var(--danger); font-weight: 600; }
+
+    /* ---------- предпросмотр ---------- */
+    .preview-shell { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
+    .tg-bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow-sm);
+      font-size: 14px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      overflow-wrap: anywhere;
+    }
+    .tg-channel { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .tg-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: grid; place-items: center;
+      background: var(--info); color: #fff;
+      font-size: 13px; font-weight: 700; flex: none;
+    }
+    .tg-channel-name { font-size: 13px; font-weight: 600; color: var(--info); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tg-media { display: grid; gap: 3px; margin-bottom: 8px; border-radius: 9px; overflow: hidden; }
+    .tg-media.grid-2 { grid-template-columns: 1fr 1fr; }
+    .tg-media img { width: 100%; height: 100%; max-height: 190px; object-fit: cover; display: block; background: var(--surface-3); }
+    .tg-media .file-chip {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px; background: var(--surface-3); border-radius: 9px; font-size: 13px;
+    }
+    .tg-media .file-chip .ico { font-size: 20px; }
+    .tg-text :is(pre, code) { background: var(--surface-3); border-radius: 6px; padding: 1px 5px; font-size: 13px; }
+    .tg-text pre { padding: 8px 10px; overflow-x: auto; }
+    .tg-text blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--accent); color: var(--muted); }
+    .tg-text a { color: var(--info); }
+    .tg-text .tg-spoiler, .tg-text tg-spoiler {
+      background: var(--border-strong); color: transparent; border-radius: 3px; cursor: pointer;
+    }
+    .tg-text .tg-spoiler:hover, .tg-text tg-spoiler:hover { background: transparent; color: inherit; }
+    .tg-buttons { display: grid; gap: 4px; margin-top: 9px; }
+    .tg-buttons .tg-brow { display: grid; gap: 4px; grid-auto-flow: column; grid-auto-columns: 1fr; }
+    .tg-btn {
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 8px;
+      font-size: 13px;
+      text-align: center;
+      color: var(--info);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .preview-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+    /* ---------- отправка ---------- */
+    .progress { height: 7px; background: var(--surface-3); border-radius: 999px; overflow: hidden; margin-top: 12px; display: none; }
+    .progress.show { display: block; }
+    .progress > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+    .status {
+      white-space: pre-wrap;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      line-height: 1.55;
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      min-height: 110px;
+      max-height: 320px;
+      overflow-y: auto;
+      margin-top: 12px;
+    }
+    .status b.ok { color: #7ee2b8; font-weight: 600; }
+    .status b.err { color: #ff9d9d; font-weight: 600; }
+    .status b.warn { color: #ffd88a; font-weight: 600; }
+    .status i { color: #8fa4c9; font-style: normal; }
+
+    .footer-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .dropzone.dragover { outline: 2px dashed var(--accent); outline-offset: 4px; }
+
+    /* ---------- тосты ---------- */
+    #toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 50; }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow);
+      padding: 10px 14px;
+      font-size: 13px;
+      max-width: 320px;
+      animation: toast-in .2s ease-out;
+    }
+    .toast.err { border-left-color: var(--danger); }
+    .toast.warn { border-left-color: var(--warning); }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    [hidden] { display: none !important; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Telegram Post Sender (без backend)</h1>
+    <header class="topbar">
+      <h1>
+        Telegram Post Sender
+        <span class="brand-sub">Отправка постов через Bot API прямо из браузера, без backend</span>
+      </h1>
+      <span id="botBadge" class="bot-badge">Токен не проверен</span>
+      <button id="themeToggle" class="ghost icon" title="Переключить тему" aria-label="Переключить тему">🌗</button>
+    </header>
 
-    <div class="card">
-      <h2>1) Доступ</h2>
-      <div class="row">
-        <div class="col">
-          <label for="token">Bot Token</label>
-          <input id="token" type="password" placeholder="123456:ABC..." />
-        </div>
-      </div>
-      <div class="row" style="margin-top:8px;">
-        <button id="saveToken">Сохранить токен в cookie</button>
-        <button id="clearToken" class="ghost">Очистить токен</button>
-      </div>
-      <p class="muted">Токен хранится только локально в cookie браузера.</p>
+    <div id="hostWarning" class="banner">
+      Страница открыта не с локального файла. Токен бота хранится в этом браузере, но на чужом
+      хостинге любой посторонний скрипт на странице получит к нему доступ. Для работы с реальным
+      ботом скачайте <code>index.html</code> и откройте его локально.
     </div>
 
-    <div class="card">
-      <h2>2) Каналы / чаты / группы</h2>
-      <div class="row">
-        <div class="col">
-          <label for="chatInput">Chat ID или @username</label>
-          <input id="chatInput" placeholder="@my_channel или -1001234567890" />
-        </div>
-      </div>
-      <div class="row" style="margin-top:8px;">
-        <button id="addChat">Добавить</button>
-        <button id="selectAllChats" class="secondary">Выбрать все</button>
-        <button id="clearSelection" class="ghost">Снять выбор</button>
-        <button id="clearChats" class="ghost">Очистить список</button>
-      </div>
-      <div id="chatList" class="list" style="margin-top:10px;"></div>
-    </div>
+    <div class="layout">
+      <div class="main">
 
-    <div class="card">
-      <h2>3) Пост</h2>
-      <div class="row">
-        <div class="col">
-          <label for="message">Текст сообщения</label>
-          <textarea id="message" placeholder="Текст поста"></textarea>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col">
-          <label for="mode">Режим отправки</label>
-          <select id="mode">
-            <option value="text">Только текст (sendMessage)</option>
-            <option value="photo">Одна картинка + текст (sendPhoto)</option>
-            <option value="album">Альбом картинок (sendMediaGroup)</option>
-          </select>
-        </div>
-        <div class="col">
-          <label for="parseMode">Parse mode</label>
-          <select id="parseMode">
-            <option value="">Без форматирования</option>
-            <option value="HTML">HTML</option>
-            <option value="MarkdownV2">MarkdownV2</option>
-          </select>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col">
-          <label for="photoUrl">URL картинки (для sendPhoto)</label>
-          <input id="photoUrl" placeholder="https://.../image.jpg" />
-        </div>
-        <div class="col">
-          <label for="photoFile">Или выбрать файл (для sendPhoto)</label>
-          <input id="photoFile" type="file" accept="image/*" />
-        </div>
-      </div>
-      <div class="row">
-        <div class="col">
-          <label for="albumUrls">URL картинок по одной строке (для sendMediaGroup)</label>
-          <textarea id="albumUrls" placeholder="https://.../1.jpg&#10;https://.../2.jpg"></textarea>
-        </div>
-        <div class="col">
-          <label for="albumFiles">Или выбрать несколько файлов (для sendMediaGroup)</label>
-          <input id="albumFiles" type="file" accept="image/*" multiple />
-        </div>
-      </div>
-    </div>
+        <section class="card">
+          <h2><span class="step">1</span> Доступ<span id="tokenTail" class="h2-tail"></span></h2>
+          <div class="row">
+            <div class="col">
+              <label for="token">Bot Token</label>
+              <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="123456:ABC..." />
+            </div>
+          </div>
+          <div class="row">
+            <button id="checkToken" class="secondary">Проверить бота</button>
+            <button id="saveToken">Сохранить</button>
+            <button id="toggleTokenView" class="ghost">Показать</button>
+            <button id="clearToken" class="ghost">Очистить</button>
+          </div>
+          <p class="muted">
+            Токен хранится в localStorage этого браузера и уходит только на
+            <code>api.telegram.org</code>. Он не попадает в шаблоны и в экспорт настроек.
+          </p>
+        </section>
 
-    <div class="card">
-      <h2>4) Конструктор кнопок</h2>
-      <div class="row">
-        <div class="col" style="max-width:220px;">
-          <label for="buttonsPerRow">Кнопок в ряд</label>
-          <input id="buttonsPerRow" type="number" min="1" max="8" value="1" />
-        </div>
-      </div>
-      <div class="row">
-        <button id="addButton" class="secondary">Добавить кнопку</button>
-        <button id="clearButtons" class="ghost">Очистить кнопки</button>
-      </div>
-      <p class="muted">Каждая строка: Текст, URL, стиль (цвет). Кнопки автоматически раскладываются по рядам слева направо.</p>
-      <p class="muted">Мини‑инструкция: чтобы получить 2 кнопки в 2 ряда, установите «Кнопок в ряд» = 2 и добавьте 4 кнопки — раскладка будет 2 + 2.</p>
-      <div id="buttonBuilder" class="btn-grid" style="margin-top:10px;"></div>
-    </div>
+        <section class="card">
+          <h2><span class="step">2</span> Получатели<span id="chatsTail" class="h2-tail"></span></h2>
+          <div class="row">
+            <div class="col">
+              <label for="chatInput">Chat ID или @username (можно несколько через запятую или с новой строки)</label>
+              <input id="chatInput" placeholder="@my_channel, -1001234567890" />
+            </div>
+          </div>
+          <div class="row">
+            <button id="addChat">Добавить</button>
+            <button id="refreshChats" class="secondary">Обновить названия</button>
+            <button id="selectAllChats" class="ghost">Выбрать все</button>
+            <button id="clearSelection" class="ghost">Снять выбор</button>
+            <button id="clearChats" class="ghost">Очистить список</button>
+          </div>
+          <div id="chatList" class="list" style="margin-top:12px;"></div>
+          <p class="muted">Названия подтягиваются через <code>getChat</code> — заодно это проверяет, что бот имеет доступ к чату.</p>
+        </section>
 
-    <div class="card">
-      <h2>5) Шаблоны постов</h2>
-      <div class="row">
-        <div class="col">
-          <label for="templateName">Название шаблона</label>
-          <input id="templateName" placeholder="Например: Анонс" />
-        </div>
-      </div>
-      <div class="row" style="margin-top:8px;">
-        <button id="saveTemplate">Сохранить шаблон</button>
-      </div>
-      <div id="templateList" class="list" style="margin-top:10px;"></div>
-    </div>
+        <section class="card dropzone" id="postCard">
+          <h2><span class="step">3</span> Пост</h2>
+          <div class="row">
+            <div class="col">
+              <label for="mode">Что отправляем</label>
+              <select id="mode">
+                <option value="text">Только текст — sendMessage</option>
+                <option value="photo">Картинка с подписью — sendPhoto</option>
+                <option value="video">Видео с подписью — sendVideo</option>
+                <option value="document">Файл с подписью — sendDocument</option>
+                <option value="album">Альбом — sendMediaGroup</option>
+              </select>
+            </div>
+            <div class="col">
+              <label for="parseMode">Разметка текста</label>
+              <select id="parseMode">
+                <option value="HTML">HTML</option>
+                <option value="MarkdownV2">MarkdownV2</option>
+                <option value="">Без форматирования</option>
+              </select>
+            </div>
+          </div>
 
-    <div class="card">
-      <h2>6) Отправка</h2>
-      <div class="footer-actions">
-        <button id="sendAll">Отправить во все выбранные чаты</button>
+          <div class="row">
+            <div class="col">
+              <label for="message">Текст поста</label>
+              <div class="toolbar" id="toolbar">
+                <button type="button" class="ghost" data-fmt="bold" title="Жирный"><b>Ж</b></button>
+                <button type="button" class="ghost" data-fmt="italic" title="Курсив"><i>К</i></button>
+                <button type="button" class="ghost" data-fmt="underline" title="Подчёркнутый"><u>Ч</u></button>
+                <button type="button" class="ghost" data-fmt="strike" title="Зачёркнутый"><s>З</s></button>
+                <button type="button" class="ghost" data-fmt="spoiler" title="Спойлер">🙈</button>
+                <button type="button" class="ghost" data-fmt="code" title="Моноширинный">&lt;/&gt;</button>
+                <button type="button" class="ghost" data-fmt="quote" title="Цитата">❝</button>
+                <button type="button" class="ghost" data-fmt="link" title="Ссылка">🔗</button>
+                <button type="button" class="ghost" id="escapeSpecials" title="Экранировать спецсимволы MarkdownV2">\ Экранировать</button>
+              </div>
+              <textarea id="message" placeholder="Текст поста"></textarea>
+              <div id="messageCounter" class="counter"></div>
+            </div>
+          </div>
+
+          <div class="row" id="fieldSingleMedia" hidden>
+            <div class="col">
+              <label for="mediaUrl">URL медиафайла</label>
+              <input id="mediaUrl" placeholder="https://.../image.jpg" />
+            </div>
+            <div class="col">
+              <label for="mediaFile">…или файл с диска</label>
+              <input id="mediaFile" type="file" />
+            </div>
+          </div>
+
+          <div class="row" id="fieldAlbum" hidden>
+            <div class="col">
+              <label for="albumUrls">URL картинок и видео, по одному в строке</label>
+              <textarea id="albumUrls" placeholder="https://.../1.jpg&#10;https://.../2.mp4"></textarea>
+            </div>
+            <div class="col">
+              <label for="albumFiles">…или файлы с диска</label>
+              <input id="albumFiles" type="file" accept="image/*,video/*" multiple />
+              <p class="hint">От 2 до 10 элементов суммарно. Тип определяется автоматически по расширению и MIME.</p>
+            </div>
+          </div>
+
+          <div class="toggle-row">
+            <label class="toggle"><input type="checkbox" id="optSilent" /> Без звука</label>
+            <label class="toggle"><input type="checkbox" id="optProtect" /> Запретить пересылку</label>
+            <label class="toggle"><input type="checkbox" id="optNoPreview" /> Без превью ссылок</label>
+          </div>
+          <p class="muted">Файлы можно перетащить мышью прямо на эту карточку.</p>
+        </section>
+
+        <section class="card">
+          <h2><span class="step">4</span> Конструктор кнопок<span id="buttonsTail" class="h2-tail"></span></h2>
+          <div class="row">
+            <div class="col" style="max-width:200px;">
+              <label for="buttonsPerRow">Кнопок в ряд</label>
+              <input id="buttonsPerRow" type="number" min="1" max="8" value="1" />
+            </div>
+          </div>
+          <div class="row">
+            <button id="addButton" class="secondary">Добавить кнопку</button>
+            <button id="clearButtons" class="ghost">Очистить</button>
+          </div>
+          <div id="buttonBuilder" class="btn-grid" style="margin-top:12px;"></div>
+          <div class="row" id="albumButtonsRow" hidden>
+            <div class="col">
+              <label for="albumButtonsText">Текст сообщения с кнопками (для альбома)</label>
+              <input id="albumButtonsText" placeholder="⤵️" />
+            </div>
+          </div>
+          <p class="muted">
+            Telegram не умеет красить inline-кнопки: в Bot API у кнопки есть только текст и ссылка.
+            Выделить кнопку можно эмодзи-маркером — он подставляется в начало подписи.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2><span class="step">5</span> Шаблоны<span id="templatesTail" class="h2-tail"></span></h2>
+          <div class="row">
+            <div class="col">
+              <label for="templateName">Название шаблона</label>
+              <input id="templateName" placeholder="Например: Анонс" />
+            </div>
+          </div>
+          <div class="row">
+            <button id="saveTemplate">Сохранить шаблон</button>
+            <button id="exportData" class="ghost">Экспорт настроек</button>
+            <button id="importData" class="ghost">Импорт настроек</button>
+            <input id="importFile" type="file" accept="application/json,.json" class="sr-only" />
+          </div>
+          <div id="templateList" class="list" style="margin-top:12px;"></div>
+          <p class="muted">Шаблон запоминает текст, разметку, режим, URL медиа, кнопки и опции. Локальные файлы и токен в шаблон не попадают.</p>
+        </section>
+
+        <section class="card">
+          <h2><span class="step">6</span> Отправка</h2>
+          <div class="row">
+            <div class="col" style="max-width:180px;">
+              <label for="delayMin">Пауза от, сек</label>
+              <input id="delayMin" type="number" min="0" max="600" step="1" value="3" />
+            </div>
+            <div class="col" style="max-width:180px;">
+              <label for="delayMax">Пауза до, сек</label>
+              <input id="delayMax" type="number" min="0" max="600" step="1" value="5" />
+            </div>
+          </div>
+          <div class="footer-actions" style="margin-top:12px;">
+            <button id="sendAll" class="big">Отправить в выбранные чаты</button>
+            <button id="cancelSend" class="danger" disabled>Отменить</button>
+            <button id="clearLog" class="ghost">Очистить лог</button>
+            <span id="progressLabel" class="muted" style="margin:0;"></span>
+          </div>
+          <div id="progress" class="progress"><i></i></div>
+          <div id="status" class="status" aria-live="polite"></div>
+          <p class="muted">Горячая клавиша: <code>Ctrl</code>/<code>Cmd</code> + <code>Enter</code>. При ошибке 429 пауза берётся из ответа Telegram, попытка повторяется автоматически.</p>
+        </section>
       </div>
-      <p class="muted">Для альбома Telegram не поддерживает inline-кнопки вместе с sendMediaGroup. Кнопки отправятся отдельным сообщением после альбома.</p>
-      <div id="status" class="status" style="margin-top:10px;"></div>
+
+      <aside class="side">
+        <section class="card">
+          <h2>Предпросмотр<span class="h2-tail">как увидят подписчики</span></h2>
+          <div class="preview-shell">
+            <div class="tg-bubble">
+              <div class="tg-channel">
+                <div id="pvAvatar" class="tg-avatar">TG</div>
+                <div id="pvChannel" class="tg-channel-name">Канал не выбран</div>
+              </div>
+              <div id="pvMedia" class="tg-media" hidden></div>
+              <div id="pvText" class="tg-text"></div>
+              <div id="pvButtons" class="tg-buttons" hidden></div>
+            </div>
+          </div>
+          <p id="pvNote" class="preview-note"></p>
+        </section>
+      </aside>
     </div>
   </div>
 
+  <div id="toasts" aria-live="polite"></div>
+
   <script>
-    const COOKIE_TOKEN = 'tg_bot_token';
-    const LS_CHATS = 'tg_chats';
-    const LS_TEMPLATES = 'tg_templates';
+  (function () {
+    'use strict';
 
-    const tokenEl = document.getElementById('token');
-    const chatInputEl = document.getElementById('chatInput');
-    const chatListEl = document.getElementById('chatList');
-    const messageEl = document.getElementById('message');
-    const modeEl = document.getElementById('mode');
-    const parseModeEl = document.getElementById('parseMode');
-    const photoUrlEl = document.getElementById('photoUrl');
-    const photoFileEl = document.getElementById('photoFile');
-    const albumUrlsEl = document.getElementById('albumUrls');
-    const albumFilesEl = document.getElementById('albumFiles');
-    const buttonsPerRowEl = document.getElementById('buttonsPerRow');
-    const buttonBuilderEl = document.getElementById('buttonBuilder');
-    const templateNameEl = document.getElementById('templateName');
-    const templateListEl = document.getElementById('templateList');
-    const statusEl = document.getElementById('status');
+    /* =========================================================================
+       Константы
+       ========================================================================= */
 
-    let chats = [];
-    let templates = [];
-    let buttons = [];
+    const LIMITS = {
+      text: 4096,
+      caption: 1024,
+      albumMin: 2,
+      albumMax: 10,
+      perRow: 8,
+      buttonText: 64
+    };
 
-    function setCookie(name, value, days = 180) {
-      const d = new Date();
-      d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-      document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
-    }
+    const MODE_METHOD = {
+      photo: { method: 'sendPhoto', field: 'photo', accept: 'image/*' },
+      video: { method: 'sendVideo', field: 'video', accept: 'video/*' },
+      document: { method: 'sendDocument', field: 'document', accept: '' }
+    };
 
-    function getCookie(name) {
-      const needle = `${name}=`;
-      return document.cookie.split(';').map(v => v.trim()).find(v => v.startsWith(needle))?.slice(needle.length) || '';
-    }
+    const EMOJI_MARKERS = ['', '🔵', '🟢', '🔴', '🟡', '⚪', '✅', '⚡', '🔥', '⭐', '🎁', '📌', '👉', '🛒', '💬'];
 
-    function deleteCookie(name) {
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax`;
-    }
+    const VIDEO_EXT = /\.(mp4|mov|m4v|webm|avi|mkv)(\?|#|$)/i;
 
-    function saveLS(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
-    function loadLS(key, fallback) {
-      try {
-        const v = localStorage.getItem(key);
-        return v ? JSON.parse(v) : fallback;
-      } catch {
-        return fallback;
+    /* =========================================================================
+       Store — хранилище с миграцией со старых ключей
+       ========================================================================= */
+
+    const Store = {
+      K: {
+        token: 'tgps_token',
+        chats: 'tgps_chats',
+        templates: 'tgps_templates',
+        draft: 'tgps_draft',
+        settings: 'tgps_settings'
+      },
+
+      get(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw === null ? fallback : JSON.parse(raw);
+        } catch {
+          return fallback;
+        }
+      },
+
+      set(key, value) {
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+        } catch (e) {
+          toast('Не удалось сохранить данные: ' + e.message, 'err');
+        }
+      },
+
+      remove(key) {
+        try { localStorage.removeItem(key); } catch { /* игнорируем */ }
+      },
+
+      /**
+       * Переносит данные из старой схемы: токен жил в cookie (уходил в каждом
+       * HTTP-запросе к домену), списки — под ключами без префикса.
+       */
+      migrate() {
+        const cookieToken = readCookie('tg_bot_token');
+        if (cookieToken && !localStorage.getItem(this.K.token)) {
+          this.set(this.K.token, cookieToken);
+        }
+        if (cookieToken) dropCookie('tg_bot_token');
+
+        const oldChats = localStorage.getItem('tg_chats');
+        if (oldChats && !localStorage.getItem(this.K.chats)) {
+          localStorage.setItem(this.K.chats, oldChats);
+          localStorage.removeItem('tg_chats');
+        }
+
+        const oldTemplates = localStorage.getItem('tg_templates');
+        if (oldTemplates && !localStorage.getItem(this.K.templates)) {
+          localStorage.setItem(this.K.templates, oldTemplates);
+          localStorage.removeItem('tg_templates');
+        }
       }
+    };
+
+    function readCookie(name) {
+      const needle = name + '=';
+      const hit = document.cookie.split(';').map(v => v.trim()).find(v => v.startsWith(needle));
+      return hit ? decodeURIComponent(hit.slice(needle.length)) : '';
     }
 
-    function log(text) {
-      statusEl.textContent += `${new Date().toLocaleTimeString()}  ${text}\n`;
-      statusEl.scrollTop = statusEl.scrollHeight;
+    function dropCookie(name) {
+      document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax';
     }
+
+    /* =========================================================================
+       Api — запросы к Telegram с ретраями и отменой
+       ========================================================================= */
+
+    const Api = {
+      /**
+       * @param {string} token
+       * @param {string} method   метод Bot API
+       * @param {object|FormData} payload
+       * @param {{signal?: AbortSignal, retries?: number, onRetry?: Function}} opts
+       */
+      async call(token, method, payload, opts = {}) {
+        const { signal, retries = 3, onRetry } = opts;
+        const url = `https://api.telegram.org/bot${token}/${method}`;
+        let attempt = 0;
+
+        for (;;) {
+          attempt += 1;
+          let res;
+          let data;
+
+          try {
+            const init = { method: 'POST', signal };
+            if (payload instanceof FormData) {
+              init.body = payload;
+            } else {
+              init.headers = { 'Content-Type': 'application/json' };
+              init.body = JSON.stringify(payload);
+            }
+            res = await fetch(url, init);
+            data = await res.json().catch(() => ({}));
+          } catch (e) {
+            if (e.name === 'AbortError') throw e;
+            // сеть отвалилась либо CORS/блокировщик — пробуем ещё раз
+            if (attempt > retries) {
+              throw new Error('Сеть недоступна или запрос заблокирован (' + e.message + ')');
+            }
+            const wait = 1000 * attempt;
+            if (onRetry) onRetry(`сетевая ошибка, повтор через ${wait / 1000} с`);
+            await sleep(wait, signal);
+            continue;
+          }
+
+          if (res.ok && data.ok) return data;
+
+          const retryAfter = data?.parameters?.retry_after;
+          if (res.status === 429 && retryAfter && attempt <= retries) {
+            if (onRetry) onRetry(`лимит Telegram, ждём ${retryAfter} с`);
+            await sleep((retryAfter + 1) * 1000, signal);
+            continue;
+          }
+
+          if (res.status >= 500 && attempt <= retries) {
+            const wait = 1500 * attempt;
+            if (onRetry) onRetry(`Telegram вернул ${res.status}, повтор через ${wait / 1000} с`);
+            await sleep(wait, signal);
+            continue;
+          }
+
+          throw new Error(explainApiError(data.description || ('HTTP ' + res.status)));
+        }
+      }
+    };
+
+    /** Переводит частые ответы Bot API в человеческие подсказки. */
+    function explainApiError(description) {
+      const d = String(description);
+      const map = [
+        [/chat not found/i, 'чат не найден — проверьте ID или @username'],
+        [/bot was kicked|bot is not a member/i, 'бот удалён из чата'],
+        [/not enough rights|CHAT_WRITE_FORBIDDEN|have no rights/i, 'у бота нет прав на публикацию'],
+        [/can't parse entities/i, 'ошибка разметки — проверьте теги или экранирование'],
+        [/can't parse inline keyboard|BUTTON_URL_INVALID/i, 'некорректная ссылка в кнопке'],
+        [/wrong file identifier|failed to get HTTP URL content|WEBPAGE_CURL_FAILED/i, 'Telegram не смог скачать файл по URL'],
+        [/message is too long/i, 'текст длиннее лимита Telegram'],
+        [/unauthorized/i, 'токен неверен или отозван'],
+        [/PHOTO_INVALID_DIMENSIONS|IMAGE_PROCESS_FAILED/i, 'Telegram не принял изображение']
+      ];
+      const hit = map.find(([re]) => re.test(d));
+      return hit ? `${d} (${hit[1]})` : d;
+    }
+
+    function sleep(ms, signal) {
+      return new Promise((resolve, reject) => {
+        if (signal?.aborted) return reject(new DOMException('Aborted', 'AbortError'));
+        const t = setTimeout(() => {
+          signal?.removeEventListener('abort', onAbort);
+          resolve();
+        }, ms);
+        function onAbort() {
+          clearTimeout(t);
+          reject(new DOMException('Aborted', 'AbortError'));
+        }
+        signal?.addEventListener('abort', onAbort, { once: true });
+      });
+    }
+
+    /* =========================================================================
+       Markup — разметка текста: экранирование, вставка, предпросмотр
+       ========================================================================= */
+
+    const Markup = {
+      escapeHtml(s) {
+        return String(s ?? '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      },
+
+      /** Экранирование по правилам MarkdownV2 — для литерального текста. */
+      escapeMarkdownV2(s) {
+        return String(s ?? '')
+          .replaceAll('\\', '\\\\')
+          .replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+      },
+
+      /** Обёртки для панели форматирования по каждому parse_mode. */
+      WRAPPERS: {
+        HTML: {
+          bold: ['<b>', '</b>'],
+          italic: ['<i>', '</i>'],
+          underline: ['<u>', '</u>'],
+          strike: ['<s>', '</s>'],
+          spoiler: ['<tg-spoiler>', '</tg-spoiler>'],
+          code: ['<code>', '</code>'],
+          quote: ['<blockquote>', '</blockquote>']
+        },
+        MarkdownV2: {
+          bold: ['*', '*'],
+          italic: ['_', '_'],
+          underline: ['__', '__'],
+          strike: ['~', '~'],
+          spoiler: ['||', '||'],
+          code: ['`', '`'],
+          quote: ['>', '']
+        }
+      },
+
+      /** Готовит текст к отправке: HTML-режим терпит <br>, остальное отдаём как есть. */
+      forSending(text, parseMode) {
+        if (parseMode === 'HTML') {
+          return String(text ?? '').replace(/<\s*br\s*\/?>/gi, '\n');
+        }
+        return String(text ?? '');
+      },
+
+      /** Санитайзер: оставляет только теги, которые понимает Telegram. */
+      sanitizeTelegramHtml(html) {
+        const ALLOWED = {
+          B: [], STRONG: [], I: [], EM: [], U: [], INS: [], S: [], STRIKE: [], DEL: [],
+          CODE: [], PRE: [], BLOCKQUOTE: [], BR: [], A: ['href'], SPAN: ['class'],
+          'TG-SPOILER': []
+        };
+
+        const doc = new DOMParser().parseFromString('<div id="r">' + html + '</div>', 'text/html');
+        const root = doc.getElementById('r');
+
+        const walk = (node) => {
+          Array.from(node.childNodes).forEach((child) => {
+            if (child.nodeType === Node.TEXT_NODE) return;
+            if (child.nodeType !== Node.ELEMENT_NODE) { child.remove(); return; }
+
+            const tag = child.tagName;
+            if (!Object.prototype.hasOwnProperty.call(ALLOWED, tag)) {
+              walk(child);
+              child.replaceWith(...child.childNodes);
+              return;
+            }
+
+            Array.from(child.attributes).forEach((attr) => {
+              if (!ALLOWED[tag].includes(attr.name)) child.removeAttribute(attr.name);
+            });
+
+            if (tag === 'A') {
+              const href = child.getAttribute('href') || '';
+              if (!/^(https?:|tg:|mailto:)/i.test(href)) child.removeAttribute('href');
+            }
+            if (tag === 'SPAN' && child.getAttribute('class') !== 'tg-spoiler') {
+              child.removeAttribute('class');
+            }
+
+            walk(child);
+          });
+        };
+
+        walk(root);
+        return root.innerHTML;
+      },
+
+      /** Мини-рендер MarkdownV2 → HTML для предпросмотра. */
+      markdownToHtml(src) {
+        const escaped = [];
+        // Выносим экранированные символы за скобки, чтобы регулярки ниже их не трогали.
+        // Разделителем служит \u0000: в пользовательском тексте его не бывает, поэтому
+        // плейсхолдер невозможно спутать с числом в обычном предложении.
+        let s = String(src ?? '').replace(/\\([_*\[\]()~`>#+\-=|{}.!\\])/g, (_, ch) => {
+          escaped.push(ch);
+          return '\u0000' + (escaped.length - 1) + '\u0000';
+        });
+
+        s = this.escapeHtml(s);
+
+        s = s.replace(/```[\w-]*\n?([\s\S]*?)```/g, (_, code) => '<pre>' + code + '</pre>');
+        s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+        s = s.replace(/\|\|([\s\S]+?)\|\|/g, '<span class="tg-spoiler">$1</span>');
+        s = s.replace(/\[([^\]\n]+)\]\((https?:[^)\s]+|tg:[^)\s]+)\)/g, '<a href="$2">$1</a>');
+        s = s.replace(/\*([^*\n]+)\*/g, '<b>$1</b>');
+        s = s.replace(/__([^_\n]+)__/g, '<u>$1</u>');
+        s = s.replace(/_([^_\n]+)_/g, '<i>$1</i>');
+        s = s.replace(/~([^~\n]+)~/g, '<s>$1</s>');
+        s = s.replace(/^&gt;\s?(.*)$/gm, '<blockquote>$1</blockquote>');
+
+        s = s.replace(/\u0000(\d+)\u0000/g, (_, i) => this.escapeHtml(escaped[Number(i)] ?? ''));
+        return s.replace(/\n/g, '<br>');
+      },
+
+      /** Итоговый HTML предпросмотра для выбранного parse_mode. */
+      preview(text, parseMode) {
+        const raw = String(text ?? '');
+        if (!raw.trim()) return '';
+        if (parseMode === 'HTML') return this.sanitizeTelegramHtml(raw.replace(/\n/g, '<br>'));
+        if (parseMode === 'MarkdownV2') return this.markdownToHtml(raw);
+        return this.escapeHtml(raw).replace(/\n/g, '<br>');
+      }
+    };
+
+    /* =========================================================================
+       State
+       ========================================================================= */
+
+    const state = {
+      chats: [],
+      buttons: [],
+      templates: [],
+      settings: { theme: 'auto', delayMin: 3, delayMax: 5 },
+      sending: false,
+      controller: null,
+      previewUrls: []
+    };
+
+    /* =========================================================================
+       Короткие ссылки на элементы
+       ========================================================================= */
+
+    const $ = (id) => document.getElementById(id);
+
+    const el = {
+      token: $('token'), botBadge: $('botBadge'), tokenTail: $('tokenTail'),
+      hostWarning: $('hostWarning'), themeToggle: $('themeToggle'),
+      chatInput: $('chatInput'), chatList: $('chatList'), chatsTail: $('chatsTail'),
+      mode: $('mode'), parseMode: $('parseMode'), message: $('message'),
+      messageCounter: $('messageCounter'), toolbar: $('toolbar'),
+      fieldSingleMedia: $('fieldSingleMedia'), mediaUrl: $('mediaUrl'), mediaFile: $('mediaFile'),
+      fieldAlbum: $('fieldAlbum'), albumUrls: $('albumUrls'), albumFiles: $('albumFiles'),
+      optSilent: $('optSilent'), optProtect: $('optProtect'), optNoPreview: $('optNoPreview'),
+      buttonsPerRow: $('buttonsPerRow'), buttonBuilder: $('buttonBuilder'), buttonsTail: $('buttonsTail'),
+      albumButtonsRow: $('albumButtonsRow'), albumButtonsText: $('albumButtonsText'),
+      templateName: $('templateName'), templateList: $('templateList'), templatesTail: $('templatesTail'),
+      importFile: $('importFile'),
+      delayMin: $('delayMin'), delayMax: $('delayMax'),
+      sendAll: $('sendAll'), cancelSend: $('cancelSend'),
+      progress: $('progress'), progressLabel: $('progressLabel'), status: $('status'),
+      pvAvatar: $('pvAvatar'), pvChannel: $('pvChannel'), pvMedia: $('pvMedia'),
+      pvText: $('pvText'), pvButtons: $('pvButtons'), pvNote: $('pvNote'),
+      postCard: $('postCard'), toasts: $('toasts')
+    };
+
+    /* =========================================================================
+       Лог и уведомления
+       ========================================================================= */
+
+    function log(text, kind) {
+      const time = new Date().toLocaleTimeString();
+      const tag = kind ? `<b class="${kind}">${Markup.escapeHtml(text)}</b>` : Markup.escapeHtml(text);
+      el.status.insertAdjacentHTML('beforeend', `<i>${time}</i>  ${tag}\n`);
+      el.status.scrollTop = el.status.scrollHeight;
+    }
+
+    function toast(text, kind) {
+      const node = document.createElement('div');
+      node.className = 'toast' + (kind ? ' ' + kind : '');
+      node.textContent = text;
+      el.toasts.appendChild(node);
+      setTimeout(() => node.remove(), 4200);
+    }
+
+    /* =========================================================================
+       Черновик: чтение формы и применение
+       ========================================================================= */
+
+    function readDraft() {
+      return {
+        message: el.message.value,
+        mode: el.mode.value,
+        parse_mode: el.parseMode.value || '',
+        mediaUrl: el.mediaUrl.value.trim(),
+        albumUrls: el.albumUrls.value.split('\n').map(s => s.trim()).filter(Boolean),
+        buttonsPerRow: clampPerRow(el.buttonsPerRow.value),
+        buttons: state.buttons.map(b => ({ ...b })),
+        albumButtonsText: el.albumButtonsText.value,
+        silent: el.optSilent.checked,
+        protect: el.optProtect.checked,
+        noPreview: el.optNoPreview.checked
+      };
+    }
+
+    function applyDraft(d) {
+      if (!d) return;
+      el.message.value = d.message || '';
+      el.mode.value = d.mode || 'text';
+      el.parseMode.value = d.parse_mode ?? 'HTML';
+      el.mediaUrl.value = d.mediaUrl || '';
+      el.albumUrls.value = (d.albumUrls || []).join('\n');
+      el.buttonsPerRow.value = String(clampPerRow(d.buttonsPerRow));
+      el.albumButtonsText.value = d.albumButtonsText || '';
+      el.optSilent.checked = Boolean(d.silent);
+      el.optProtect.checked = Boolean(d.protect);
+      el.optNoPreview.checked = Boolean(d.noPreview);
+      state.buttons = (d.buttons || []).map(b => ({
+        text: b.text || '',
+        url: b.url || '',
+        emoji: b.emoji || ''
+      }));
+      el.mediaFile.value = '';
+      el.albumFiles.value = '';
+      renderButtons();
+      syncModeFields();
+      renderPreview();
+    }
+
+    function clampPerRow(v) {
+      return Math.max(1, Math.min(LIMITS.perRow, Number(v) || 1));
+    }
+
+    const saveDraft = debounce(() => {
+      Store.set(Store.K.draft, readDraft());
+    }, 400);
+
+    function debounce(fn, ms) {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), ms);
+      };
+    }
+
+    /* =========================================================================
+       Чаты
+       ========================================================================= */
 
     function normalizeChats(raw) {
       if (!Array.isArray(raw)) return [];
       return raw.map((item) => {
-        if (typeof item === "string") return { id: item, selected: true };
+        if (typeof item === 'string') return { id: item, title: '', type: '', selected: true };
         return {
-          id: String(item?.id || "").trim(),
+          id: String(item?.id || '').trim(),
+          title: String(item?.title || ''),
+          type: String(item?.type || ''),
           selected: item?.selected !== false
         };
-      }).filter(x => x.id);
+      }).filter(c => c.id);
     }
 
     function saveChats() {
-      saveLS(LS_CHATS, chats);
+      Store.set(Store.K.chats, state.chats);
+      updateTails();
+    }
+
+    function chatTypeLabel(type) {
+      return { channel: 'канал', supergroup: 'группа', group: 'группа', private: 'личный' }[type] || '';
     }
 
     function renderChats() {
-      chatListEl.innerHTML = "";
-      chatListEl.classList.toggle("two-cols", chats.length > 5);
+      el.chatList.innerHTML = '';
+      el.chatList.classList.toggle('two-cols', state.chats.length > 5);
 
-      chats.forEach((chat, idx) => {
-        const row = document.createElement("div");
-        row.className = `item${chat.selected ? " selected" : ""}`;
-        row.innerHTML = `<div class="chat-item-main"><input type="checkbox" ${chat.selected ? "checked" : ""} data-a="check" /><span>${escapeHtml(chat.id)}</span></div><button class="danger" data-a="del">Удалить</button>`;
-
-        row.querySelector('[data-a="check"]').onchange = (e) => {
-          chats[idx].selected = e.target.checked;
-          saveChats();
-        };
-
-        row.querySelector('[data-a="del"]').onclick = () => {
-          chats.splice(idx, 1);
-          saveChats();
-          renderChats();
-        };
-
-        chatListEl.appendChild(row);
-      });
-
-      if (!chats.length) {
-        chatListEl.classList.remove("two-cols");
-        chatListEl.innerHTML = '<p class="muted">Список пуст</p>';
-      }
-    }
-
-    function renderButtons() {
-  buttonBuilderEl.innerHTML = '';
-  buttons.forEach((btn, idx) => {
-    const row = document.createElement('div');
-    row.className = 'btn-row';
-    const styleVal = (btn.style || '').trim();
-    row.innerHTML = `
-      <input placeholder="Текст" value="${escapeHtml(btn.text)}" data-f="text" />
-      <input placeholder="URL" value="${escapeHtml(btn.url)}" data-f="url" />
-      <select data-f="style" style="max-width:170px;">
-        <option value="">Стандарт</option>
-        <option value="primary" ${styleVal === 'primary' ? 'selected' : ''}>primary (синяя)</option>
-        <option value="success" ${styleVal === 'success' ? 'selected' : ''}>success (зелёная)</option>
-        <option value="danger" ${styleVal === 'danger' ? 'selected' : ''}>danger (красная)</option>
-      </select>
-      <button class="danger">X</button>
-    `;
-    row.querySelectorAll('input, select').forEach(el => {
-      const handler = (e) => {
-        const f = e.target.dataset.f;
-        buttons[idx][f] = e.target.value;
-      };
-      el.oninput = handler;
-      el.onchange = handler;
-    });
-    row.querySelector('button').onclick = () => {
-      buttons.splice(idx, 1);
-      renderButtons();
-    };
-    buttonBuilderEl.appendChild(row);
-  });
-  if (!buttons.length) buttonBuilderEl.innerHTML = '<p class="muted">Кнопок нет</p>';
-}
-
-function escapeHtml(s) {
-      return (s || '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;');
-    }
-
-    function escapeMarkdownV2(text) {
-      const source = String(text || '');
-      return source
-        .replaceAll('\\', '\\\\')
-        .replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
-    }
-
-    function normalizeHtmlForTelegram(text) {
-      return String(text || '')
-        .replace(/<\s*br\s*\/?>/gi, '\n');
-    }
-
-    function normalizeTextForParseMode(text, parseMode) {
-      if ((parseMode || '') === 'MarkdownV2') {
-        return escapeMarkdownV2(text);
-      }
-      if ((parseMode || '') === 'HTML') {
-        return normalizeHtmlForTelegram(text);
-      }
-      return String(text || '');
-    }
-
-    function buildReplyMarkup() {
-  const valid = buttons.filter(b => (b.text || '').trim() && (b.url || '').trim());
-  if (!valid.length) return null;
-
-  const perRow = Math.max(1, Math.min(8, Number(buttonsPerRowEl.value) || 1));
-  const prepared = valid.map((b) => {
-    const item = { text: String(b.text).trim(), url: String(b.url).trim() };
-    const style = String(b.style || '').trim();
-    if (['primary', 'success', 'danger'].includes(style)) item.style = style;
-    return item;
-  });
-
-  const inline_keyboard = [];
-  for (let i = 0; i < prepared.length; i += perRow) {
-    inline_keyboard.push(prepared.slice(i, i + perRow));
-  }
-
-  return { inline_keyboard };
-}
-
-    function readFormData() {
-      return {
-        message: messageEl.value,
-        mode: modeEl.value,
-        parse_mode: parseModeEl.value || undefined,
-        photoUrl: photoUrlEl.value.trim(),
-        photoFile: photoFileEl.files[0] || null,
-        albumUrls: albumUrlsEl.value.split('\n').map(s => s.trim()).filter(Boolean),
-        albumFiles: Array.from(albumFilesEl.files || []),
-        buttonsPerRow: Math.max(1, Math.min(8, Number(buttonsPerRowEl.value) || 1)),
-        buttons: structuredClone(buttons)
-      };
-    }
-
-    function applyTemplate(tpl) {
-      messageEl.value = tpl.message || '';
-      modeEl.value = tpl.mode || 'text';
-      parseModeEl.value = tpl.parse_mode || '';
-      photoUrlEl.value = tpl.photoUrl || '';
-      albumUrlsEl.value = (tpl.albumUrls || []).join('\n');
-      buttonsPerRowEl.value = String(Math.max(1, Math.min(8, Number(tpl.buttonsPerRow) || 1)));
-      photoFileEl.value = '';
-      albumFilesEl.value = '';
-      buttons = structuredClone(tpl.buttons || []);
-      renderButtons();
-    }
-
-    function renderTemplates() {
-      templateListEl.innerHTML = '';
-      templates.forEach((tpl, idx) => {
-        const row = document.createElement('div');
-        row.className = 'item';
-        row.innerHTML = `<span>${escapeHtml(tpl.name)}</span>
-          <button class="secondary" data-a="load">Применить</button>
-          <button class="danger" data-a="del">Удалить</button>`;
-        row.querySelector('[data-a="load"]').onclick = () => applyTemplate(tpl);
-        row.querySelector('[data-a="del"]').onclick = () => {
-          templates.splice(idx, 1);
-          saveLS(LS_TEMPLATES, templates);
-          renderTemplates();
-        };
-        templateListEl.appendChild(row);
-      });
-      if (!templates.length) templateListEl.innerHTML = '<p class="muted">Шаблонов нет</p>';
-    }
-
-    async function tgRequest(token, method, body) {
-      const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        throw new Error(data.description || `HTTP ${res.status}`);
-      }
-      return data;
-    }
-
-    async function tgRequestFormData(token, method, formData) {
-      const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-        method: 'POST',
-        body: formData
-      });
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        throw new Error(data.description || `HTTP ${res.status}`);
-      }
-      return data;
-    }
-
-    async function sendToChat(token, chatId, data) {
-      const reply_markup = buildReplyMarkup();
-      const normalizedMessage = normalizeTextForParseMode(data.message || '', data.parse_mode);
-
-      if (data.mode === 'text') {
-        const payload = {
-          chat_id: chatId,
-          text: normalizedMessage || ' ',
-          parse_mode: data.parse_mode
-        };
-        if (reply_markup) payload.reply_markup = reply_markup;
-        await tgRequest(token, 'sendMessage', payload);
+      if (!state.chats.length) {
+        el.chatList.classList.remove('two-cols');
+        el.chatList.innerHTML = '<div class="empty">Список пуст — добавьте канал, группу или чат</div>';
+        updateTails();
         return;
       }
 
-      if (data.mode === 'photo') {
+      state.chats.forEach((chat, idx) => {
+        const row = document.createElement('div');
+        row.className = 'item' + (chat.selected ? ' selected' : '');
+        const label = chat.title || chat.id;
+        const sub = chat.title ? chat.id : 'название не загружено';
+
+        row.innerHTML = `
+          <div class="chat-main">
+            <input type="checkbox" ${chat.selected ? 'checked' : ''} data-a="check" aria-label="Выбрать ${Markup.escapeHtml(label)}" />
+            <div class="chat-text">
+              <div class="chat-title">${Markup.escapeHtml(label)}</div>
+              <div class="chat-id">${Markup.escapeHtml(sub)}</div>
+            </div>
+          </div>
+          ${chat.type ? `<span class="chat-tag">${Markup.escapeHtml(chatTypeLabel(chat.type))}</span>` : ''}
+          <button class="danger icon" data-a="del" title="Удалить">✕</button>`;
+
+        row.querySelector('[data-a="check"]').onchange = (e) => {
+          state.chats[idx].selected = e.target.checked;
+          saveChats();
+          row.classList.toggle('selected', e.target.checked);
+          renderPreview();
+        };
+
+        row.querySelector('[data-a="del"]').onclick = () => {
+          state.chats.splice(idx, 1);
+          saveChats();
+          renderChats();
+          renderPreview();
+        };
+
+        el.chatList.appendChild(row);
+      });
+
+      updateTails();
+    }
+
+    async function fetchChatTitle(chat) {
+      const token = el.token.value.trim();
+      if (!token) return false;
+      try {
+        const data = await Api.call(token, 'getChat', { chat_id: chat.id }, { retries: 1 });
+        const c = data.result || {};
+        chat.title = c.title || [c.first_name, c.last_name].filter(Boolean).join(' ') || (c.username ? '@' + c.username : '');
+        chat.type = c.type || '';
+        return true;
+      } catch (e) {
+        log(`Не удалось получить данные ${chat.id}: ${e.message}`, 'warn');
+        return false;
+      }
+    }
+
+    /* =========================================================================
+       Кнопки
+       ========================================================================= */
+
+    function renderButtons() {
+      el.buttonBuilder.innerHTML = '';
+
+      if (!state.buttons.length) {
+        el.buttonBuilder.innerHTML = '<div class="empty">Кнопок нет</div>';
+      }
+
+      state.buttons.forEach((btn, idx) => {
+        const row = document.createElement('div');
+        row.className = 'btn-row';
+        const options = EMOJI_MARKERS.map(e =>
+          `<option value="${e}" ${btn.emoji === e ? 'selected' : ''}>${e || '—'}</option>`
+        ).join('');
+
+        row.innerHTML = `
+          <input class="f-text" placeholder="Текст кнопки" value="${Markup.escapeHtml(btn.text)}" data-f="text" />
+          <input class="f-url" placeholder="https://..." value="${Markup.escapeHtml(btn.url)}" data-f="url" />
+          <select class="f-emoji" data-f="emoji" title="Эмодзи-маркер">${options}</select>
+          <span class="move">
+            <button class="ghost icon" data-a="up" title="Выше" ${idx === 0 ? 'disabled' : ''}>↑</button>
+            <button class="ghost icon" data-a="down" title="Ниже" ${idx === state.buttons.length - 1 ? 'disabled' : ''}>↓</button>
+          </span>
+          <button class="danger icon" data-a="del" title="Удалить">✕</button>`;
+
+        row.querySelectorAll('[data-f]').forEach((field) => {
+          const handler = (e) => {
+            state.buttons[idx][e.target.dataset.f] = e.target.value;
+            if (e.target.dataset.f === 'url') {
+              e.target.classList.toggle('invalid', Boolean(e.target.value.trim()) && !isValidButtonUrl(e.target.value));
+            }
+            saveDraft();
+            renderPreview();
+            updateTails();
+          };
+          field.oninput = handler;
+          field.onchange = handler;
+        });
+
+        const urlField = row.querySelector('[data-f="url"]');
+        if (btn.url.trim() && !isValidButtonUrl(btn.url)) urlField.classList.add('invalid');
+
+        row.querySelector('[data-a="up"]').onclick = () => moveButton(idx, -1);
+        row.querySelector('[data-a="down"]').onclick = () => moveButton(idx, 1);
+        row.querySelector('[data-a="del"]').onclick = () => {
+          state.buttons.splice(idx, 1);
+          renderButtons();
+          saveDraft();
+          renderPreview();
+        };
+
+        el.buttonBuilder.appendChild(row);
+      });
+
+      updateTails();
+    }
+
+    function moveButton(idx, delta) {
+      const target = idx + delta;
+      if (target < 0 || target >= state.buttons.length) return;
+      const [item] = state.buttons.splice(idx, 1);
+      state.buttons.splice(target, 0, item);
+      renderButtons();
+      saveDraft();
+      renderPreview();
+    }
+
+    function isValidButtonUrl(url) {
+      return /^(https?:\/\/|tg:\/\/)\S+$/i.test(String(url).trim());
+    }
+
+    /** Собирает inline_keyboard. Поля style в Bot API нет — выделение делаем эмодзи. */
+    function buildReplyMarkup(draft) {
+      const valid = draft.buttons.filter(b => (b.text || '').trim() && isValidButtonUrl(b.url));
+      if (!valid.length) return null;
+
+      const prepared = valid.map(b => ({
+        text: ((b.emoji ? b.emoji + ' ' : '') + String(b.text).trim()).slice(0, LIMITS.buttonText),
+        url: String(b.url).trim()
+      }));
+
+      const inline_keyboard = [];
+      for (let i = 0; i < prepared.length; i += draft.buttonsPerRow) {
+        inline_keyboard.push(prepared.slice(i, i + draft.buttonsPerRow));
+      }
+      return { inline_keyboard };
+    }
+
+    /* =========================================================================
+       Шаблоны и экспорт
+       ========================================================================= */
+
+    function renderTemplates() {
+      el.templateList.innerHTML = '';
+
+      if (!state.templates.length) {
+        el.templateList.innerHTML = '<div class="empty">Шаблонов нет</div>';
+        updateTails();
+        return;
+      }
+
+      state.templates.forEach((tpl, idx) => {
+        const row = document.createElement('div');
+        row.className = 'item';
+        row.innerHTML = `
+          <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${Markup.escapeHtml(tpl.name)}</span>
+          <button class="secondary" data-a="load">Применить</button>
+          <button class="danger icon" data-a="del" title="Удалить">✕</button>`;
+
+        row.querySelector('[data-a="load"]').onclick = () => {
+          applyDraft(tpl);
+          saveDraft();
+          toast(`Шаблон «${tpl.name}» применён`);
+        };
+        row.querySelector('[data-a="del"]').onclick = () => {
+          state.templates.splice(idx, 1);
+          Store.set(Store.K.templates, state.templates);
+          renderTemplates();
+        };
+
+        el.templateList.appendChild(row);
+      });
+
+      updateTails();
+    }
+
+    function exportSettings() {
+      const payload = {
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        chats: state.chats,
+        templates: state.templates,
+        settings: state.settings
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `telegram-post-sender-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Настройки выгружены (без токена)');
+    }
+
+    async function importSettings(file) {
+      try {
+        const data = JSON.parse(await file.text());
+        if (Array.isArray(data.chats)) {
+          const incoming = normalizeChats(data.chats);
+          incoming.forEach((c) => {
+            if (!state.chats.some(x => x.id === c.id)) state.chats.push(c);
+          });
+          saveChats();
+          renderChats();
+        }
+        if (Array.isArray(data.templates)) {
+          data.templates.forEach((t) => {
+            if (!t?.name) return;
+            const idx = state.templates.findIndex(x => x.name === t.name);
+            if (idx >= 0) state.templates[idx] = t;
+            else state.templates.push(t);
+          });
+          Store.set(Store.K.templates, state.templates);
+          renderTemplates();
+        }
+        if (data.settings) {
+          state.settings = { ...state.settings, ...data.settings };
+          Store.set(Store.K.settings, state.settings);
+          applySettings();
+        }
+        toast('Настройки импортированы');
+      } catch (e) {
+        toast('Не удалось прочитать файл: ' + e.message, 'err');
+      }
+    }
+
+    /* =========================================================================
+       Предпросмотр
+       ========================================================================= */
+
+    function releasePreviewUrls() {
+      state.previewUrls.forEach(URL.revokeObjectURL);
+      state.previewUrls = [];
+    }
+
+    function collectAlbumItems(draft) {
+      const items = [];
+      draft.albumUrls.forEach((url) => {
+        items.push({ type: VIDEO_EXT.test(url) ? 'video' : 'photo', url });
+      });
+      Array.from(el.albumFiles.files || []).forEach((file) => {
+        items.push({ type: file.type.startsWith('video/') ? 'video' : 'photo', file });
+      });
+      return items;
+    }
+
+    function renderPreview() {
+      releasePreviewUrls();
+      const draft = readDraft();
+
+      // канал
+      const first = state.chats.find(c => c.selected);
+      const name = first ? (first.title || first.id) : 'Канал не выбран';
+      el.pvChannel.textContent = name;
+      el.pvAvatar.textContent = (first ? name.replace(/^@/, '') : 'TG').slice(0, 2).toUpperCase();
+
+      // медиа
+      el.pvMedia.innerHTML = '';
+      el.pvMedia.className = 'tg-media';
+      const mediaNodes = [];
+
+      if (draft.mode === 'album') {
+        const items = collectAlbumItems(draft).slice(0, LIMITS.albumMax);
+        items.forEach((item) => mediaNodes.push(previewMediaNode(item.type, item.url, item.file)));
+        if (mediaNodes.length > 1) el.pvMedia.classList.add('grid-2');
+      } else if (draft.mode !== 'text') {
+        const file = el.mediaFile.files[0] || null;
+        if (file || draft.mediaUrl) {
+          const kind = draft.mode === 'document' ? 'document' : draft.mode;
+          mediaNodes.push(previewMediaNode(kind, draft.mediaUrl, file));
+        }
+      }
+
+      mediaNodes.forEach(n => el.pvMedia.appendChild(n));
+      el.pvMedia.hidden = mediaNodes.length === 0;
+
+      // текст
+      el.pvText.innerHTML = Markup.preview(draft.message, draft.parse_mode)
+        || '<span style="color:var(--muted)">Текста пока нет</span>';
+
+      // кнопки
+      const markup = buildReplyMarkup(draft);
+      el.pvButtons.innerHTML = '';
+      el.pvButtons.hidden = !markup;
+      if (markup) {
+        markup.inline_keyboard.forEach((rowButtons) => {
+          const rowEl = document.createElement('div');
+          rowEl.className = 'tg-brow';
+          rowButtons.forEach((b) => {
+            const node = document.createElement('div');
+            node.className = 'tg-btn';
+            node.textContent = b.text;
+            rowEl.appendChild(node);
+          });
+          el.pvButtons.appendChild(rowEl);
+        });
+      }
+
+      // примечание
+      const notes = [];
+      if (draft.mode === 'album' && markup) notes.push('Кнопки уйдут отдельным сообщением после альбома — Telegram не крепит их к sendMediaGroup.');
+      if (draft.mode !== 'text' && draft.mode !== 'album' && draft.message.length > LIMITS.caption) notes.push('Подпись длиннее 1024 символов.');
+      if (draft.parse_mode === '') notes.push('Разметка отключена: теги и символы уйдут как обычный текст.');
+      el.pvNote.textContent = notes.join(' ');
+
+      updateCounter(draft);
+      updateTails();
+    }
+
+    function previewMediaNode(kind, url, file) {
+      if (kind === 'photo') {
+        const img = document.createElement('img');
+        img.alt = '';
+        img.loading = 'lazy';
+        img.src = file ? trackUrl(URL.createObjectURL(file)) : url;
+        img.onerror = () => { img.replaceWith(chipNode('🖼️', 'Изображение недоступно для предпросмотра')); };
+        return img;
+      }
+      if (kind === 'video') {
+        return chipNode('🎬', file ? file.name : url);
+      }
+      return chipNode('📎', file ? `${file.name} · ${formatBytes(file.size)}` : url);
+    }
+
+    function chipNode(icon, text) {
+      const node = document.createElement('div');
+      node.className = 'file-chip';
+      node.innerHTML = `<span class="ico">${icon}</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>`;
+      node.lastElementChild.textContent = text;
+      return node;
+    }
+
+    function trackUrl(url) {
+      state.previewUrls.push(url);
+      return url;
+    }
+
+    function formatBytes(n) {
+      if (n < 1024) return n + ' Б';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' КБ';
+      return (n / 1024 / 1024).toFixed(1) + ' МБ';
+    }
+
+    function updateCounter(draft) {
+      const limit = draft.mode === 'text' ? LIMITS.text : LIMITS.caption;
+      const used = draft.message.length;
+      el.messageCounter.textContent = `${used} / ${limit}`;
+      el.messageCounter.className = 'counter' + (used > limit ? ' over' : used > limit * 0.9 ? ' warn' : '');
+    }
+
+    function updateTails() {
+      const selected = state.chats.filter(c => c.selected).length;
+      el.chatsTail.textContent = state.chats.length
+        ? `выбрано ${selected} из ${state.chats.length}`
+        : '';
+      el.buttonsTail.textContent = state.buttons.length ? `${state.buttons.length} шт.` : '';
+      el.templatesTail.textContent = state.templates.length ? `${state.templates.length} шт.` : '';
+    }
+
+    /** Показывает только те поля, которые нужны выбранному режиму. */
+    function syncModeFields() {
+      const mode = el.mode.value;
+      el.fieldSingleMedia.hidden = !MODE_METHOD[mode];
+      el.fieldAlbum.hidden = mode !== 'album';
+      el.albumButtonsRow.hidden = !(mode === 'album' && state.buttons.length);
+
+      if (MODE_METHOD[mode]) {
+        el.mediaFile.accept = MODE_METHOD[mode].accept;
+        el.fieldSingleMedia.querySelector('label[for="mediaUrl"]').textContent =
+          mode === 'photo' ? 'URL картинки' : mode === 'video' ? 'URL видео' : 'URL файла';
+      }
+
+      const noMarkup = el.parseMode.value === '';
+      el.toolbar.querySelectorAll('button').forEach((b) => { b.disabled = noMarkup; });
+      $('escapeSpecials').disabled = el.parseMode.value !== 'MarkdownV2';
+      $('escapeSpecials').title = el.parseMode.value === 'MarkdownV2'
+        ? 'Экранировать спецсимволы MarkdownV2'
+        : 'Доступно только для MarkdownV2';
+    }
+
+    /* =========================================================================
+       Отправка
+       ========================================================================= */
+
+    function baseOptions(draft) {
+      const opts = {};
+      if (draft.silent) opts.disable_notification = true;
+      if (draft.protect) opts.protect_content = true;
+      return opts;
+    }
+
+    function appendCommon(fd, draft) {
+      if (draft.silent) fd.append('disable_notification', 'true');
+      if (draft.protect) fd.append('protect_content', 'true');
+    }
+
+    /**
+     * Достаёт file_id из отправленного сообщения. Telegram принимает file_id
+     * вместо файла, поэтому в остальные чаты рассылки медиа уходит ссылкой,
+     * а не повторной загрузкой тех же байтов.
+     */
+    function extractFileId(message) {
+      if (!message) return '';
+      if (Array.isArray(message.photo) && message.photo.length) {
+        return message.photo[message.photo.length - 1].file_id || '';
+      }
+      return message.video?.file_id || message.document?.file_id || message.animation?.file_id || '';
+    }
+
+    async function sendToChat(token, chatId, draft, signal, onRetry, cache) {
+      const markup = buildReplyMarkup(draft);
+      const text = Markup.forSending(draft.message, draft.parse_mode);
+      const opts = { signal, onRetry };
+      const uploaded = cache || new Map();
+
+      if (draft.mode === 'text') {
         const payload = {
           chat_id: chatId,
-          caption: normalizedMessage,
-          parse_mode: data.parse_mode
+          text: text,
+          ...baseOptions(draft)
         };
-        if (reply_markup) payload.reply_markup = reply_markup;
+        if (draft.parse_mode) payload.parse_mode = draft.parse_mode;
+        if (draft.noPreview) payload.link_preview_options = { is_disabled: true };
+        if (markup) payload.reply_markup = markup;
+        await Api.call(token, 'sendMessage', payload, opts);
+        return;
+      }
 
-        if (data.photoFile) {
+      if (MODE_METHOD[draft.mode]) {
+        const { method, field } = MODE_METHOD[draft.mode];
+        const file = el.mediaFile.files[0] || null;
+        const cachedId = uploaded.get('single');
+
+        if (file && !cachedId) {
           const fd = new FormData();
-          fd.append('chat_id', String(payload.chat_id));
-          fd.append('photo', data.photoFile, data.photoFile.name || 'photo.jpg');
-          if (payload.caption) fd.append('caption', payload.caption);
-          if (payload.parse_mode) fd.append('parse_mode', payload.parse_mode);
-          if (payload.reply_markup) fd.append('reply_markup', JSON.stringify(payload.reply_markup));
-          await tgRequestFormData(token, 'sendPhoto', fd);
+          fd.append('chat_id', String(chatId));
+          fd.append(field, file, file.name || field);
+          if (text) fd.append('caption', text);
+          if (draft.parse_mode) fd.append('parse_mode', draft.parse_mode);
+          if (markup) fd.append('reply_markup', JSON.stringify(markup));
+          appendCommon(fd, draft);
+          const res = await Api.call(token, method, fd, opts);
+          const id = extractFileId(res.result);
+          if (id) uploaded.set('single', id);
           return;
         }
 
-        if (!data.photoUrl) throw new Error('Укажите URL картинки или выберите файл для sendPhoto');
-        payload.photo = data.photoUrl;
-        await tgRequest(token, 'sendPhoto', payload);
+        const source = cachedId || draft.mediaUrl;
+        if (!source) throw new Error('Укажите URL или выберите файл');
+        const payload = { chat_id: chatId, [field]: source, ...baseOptions(draft) };
+        if (text) payload.caption = text;
+        if (draft.parse_mode) payload.parse_mode = draft.parse_mode;
+        if (markup) payload.reply_markup = markup;
+        await Api.call(token, method, payload, opts);
         return;
       }
 
-      if (data.mode === 'album') {
-        const totalCount = data.albumUrls.length + data.albumFiles.length;
-        if (totalCount < 2) {
-          throw new Error('Для sendMediaGroup нужно минимум 2 картинки (URL и/или файлы)');
-        }
+      if (draft.mode === 'album') {
+        // файл берём только если он ещё не загружен — иначе идёт готовый file_id
+        const prepared = collectAlbumItems(draft).map((item, i) => {
+          const cachedId = uploaded.get('album:' + i);
+          return { type: item.type, cachedId, file: cachedId ? null : item.file, url: item.url };
+        });
 
-        if (data.albumFiles.length > 0) {
-          const fd = new FormData();
-          const media = [];
+        const hasFiles = prepared.some(p => p.file);
+        const fd = hasFiles ? new FormData() : null;
 
-          data.albumUrls.forEach((url, i) => {
-            const item = { type: 'photo', media: url };
-            if (i === 0 && !data.albumFiles.length && normalizedMessage) {
-              item.caption = normalizedMessage;
-              if (data.parse_mode) item.parse_mode = data.parse_mode;
-            }
-            media.push(item);
-          });
+        // caption всегда на первом элементе — независимо от того, URL это или файл
+        const media = prepared.map((item, i) => {
+          const entry = { type: item.type };
+          if (item.cachedId) {
+            entry.media = item.cachedId;
+          } else if (item.file) {
+            const name = `media${i}`;
+            entry.media = `attach://${name}`;
+            fd.append(name, item.file, item.file.name || name);
+          } else {
+            entry.media = item.url;
+          }
+          if (i === 0 && text) {
+            entry.caption = text;
+            if (draft.parse_mode) entry.parse_mode = draft.parse_mode;
+          }
+          return entry;
+        });
 
-          data.albumFiles.forEach((file, i) => {
-            const attachName = `file${i}`;
-            const item = { type: 'photo', media: `attach://${attachName}` };
-            if (media.length === 0 && i === 0 && normalizedMessage) {
-              item.caption = normalizedMessage;
-              if (data.parse_mode) item.parse_mode = data.parse_mode;
-            }
-            media.push(item);
-            fd.append(attachName, file, file.name || `${attachName}.jpg`);
-          });
-
+        let res;
+        if (hasFiles) {
           fd.append('chat_id', String(chatId));
           fd.append('media', JSON.stringify(media));
-          await tgRequestFormData(token, 'sendMediaGroup', fd);
+          appendCommon(fd, draft);
+          res = await Api.call(token, 'sendMediaGroup', fd, opts);
         } else {
-          const media = data.albumUrls.map((url, i) => {
-            const item = { type: 'photo', media: url };
-            if (i === 0 && normalizedMessage) {
-              item.caption = normalizedMessage;
-              if (data.parse_mode) item.parse_mode = data.parse_mode;
+          res = await Api.call(token, 'sendMediaGroup', {
+            chat_id: chatId,
+            media,
+            ...baseOptions(draft)
+          }, opts);
+        }
+
+        const messages = Array.isArray(res.result) ? res.result : [];
+        prepared.forEach((item, i) => {
+          if (!item.file) return;
+          const id = extractFileId(messages[i]);
+          if (id) uploaded.set('album:' + i, id);
+        });
+
+        if (markup) {
+          await Api.call(token, 'sendMessage', {
+            chat_id: chatId,
+            text: draft.albumButtonsText.trim() || '⤵️',
+            reply_markup: markup,
+            ...baseOptions(draft)
+          }, opts);
+        }
+      }
+    }
+
+    /** Проверки до первого запроса — чтобы не ловить ошибки Telegram по одной. */
+    function validateBeforeSend(draft, token, selected) {
+      const errors = [];
+
+      if (!token) errors.push('Введите токен бота');
+      if (!selected.length) errors.push('Выберите хотя бы один чат');
+
+      const limit = draft.mode === 'text' ? LIMITS.text : LIMITS.caption;
+      if (draft.message.length > limit) {
+        errors.push(`Текст ${draft.message.length} символов при лимите ${limit}`);
+      }
+
+      if (draft.mode === 'text' && !draft.message.trim()) {
+        errors.push('Пустой текст отправить нельзя');
+      }
+
+      if (MODE_METHOD[draft.mode] && !draft.mediaUrl && !el.mediaFile.files[0]) {
+        errors.push('Добавьте URL или файл');
+      }
+
+      if (draft.mode === 'album') {
+        const count = collectAlbumItems(draft).length;
+        if (count < LIMITS.albumMin) errors.push(`В альбоме минимум ${LIMITS.albumMin} элемента, сейчас ${count}`);
+        if (count > LIMITS.albumMax) errors.push(`В альбоме максимум ${LIMITS.albumMax} элементов, сейчас ${count}`);
+      }
+
+      const badButton = draft.buttons.find(b => (b.text || '').trim() && !isValidButtonUrl(b.url));
+      if (badButton) errors.push(`У кнопки «${badButton.text}» некорректная ссылка`);
+
+      return errors;
+    }
+
+    function setSending(on) {
+      state.sending = on;
+      el.sendAll.disabled = on;
+      el.cancelSend.disabled = !on;
+      el.progress.classList.toggle('show', on);
+      if (!on) el.progressLabel.textContent = '';
+    }
+
+    function randomDelayMs() {
+      const min = Math.max(0, Number(el.delayMin.value) || 0) * 1000;
+      const max = Math.max(min, Number(el.delayMax.value) * 1000 || min);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    async function sendAll() {
+      if (state.sending) return;
+
+      const token = el.token.value.trim();
+      const draft = readDraft();
+      const selected = state.chats.filter(c => c.selected);
+      const errors = validateBeforeSend(draft, token, selected);
+
+      if (errors.length) {
+        errors.forEach(e => log(e, 'err'));
+        toast(errors[0], 'err');
+        return;
+      }
+
+      state.controller = new AbortController();
+      const signal = state.controller.signal;
+      setSending(true);
+
+      let ok = 0;
+      let failed = 0;
+      // file_id, полученные при первой отправке: остальным чатам файл не перезаливаем
+      const uploaded = new Map();
+      log(`Старт: ${selected.length} чат(ов), режим ${draft.mode}`, 'warn');
+
+      try {
+        for (let i = 0; i < selected.length; i += 1) {
+          const chat = selected[i];
+          const label = chat.title || chat.id;
+
+          el.progressLabel.textContent = `${i + 1} / ${selected.length}`;
+          el.progress.firstElementChild.style.width = `${(i / selected.length) * 100}%`;
+
+          try {
+            const hadUploads = uploaded.size;
+            await sendToChat(token, chat.id, draft, signal, (msg) => log(`${label}: ${msg}`, 'warn'), uploaded);
+            ok += 1;
+            log(`OK  ${label}`, 'ok');
+            if (!hadUploads && uploaded.size) {
+              log('файлы загружены — дальше отправляем по file_id');
             }
-            return item;
-          });
+          } catch (e) {
+            if (e.name === 'AbortError') throw e;
+            failed += 1;
+            log(`ERR ${label} → ${e.message}`, 'err');
+          }
 
-          await tgRequest(token, 'sendMediaGroup', {
-            chat_id: chatId,
-            media
-          });
+          if (i < selected.length - 1) {
+            const wait = randomDelayMs();
+            if (wait > 0) log(`пауза ${Math.round(wait / 1000)} с`);
+            await sleep(wait, signal);
+          }
         }
 
-        if (reply_markup) {
-          await tgRequest(token, 'sendMessage', {
-            chat_id: chatId,
-            text: 'Кнопки:',
-            reply_markup
-          });
+        el.progress.firstElementChild.style.width = '100%';
+        log(`Готово: успешно ${ok}, с ошибками ${failed}`, failed ? 'warn' : 'ok');
+        toast(failed ? `Отправлено ${ok}, ошибок ${failed}` : `Отправлено во все ${ok} чат(ов)`, failed ? 'warn' : '');
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          log(`Отменено пользователем. Успешно ${ok}, с ошибками ${failed}`, 'warn');
+          toast('Рассылка отменена', 'warn');
+        } else {
+          log('Непредвиденная ошибка: ' + e.message, 'err');
         }
+      } finally {
+        setSending(false);
+        state.controller = null;
       }
     }
 
-    document.getElementById('saveToken').onclick = () => {
-      if (!tokenEl.value.trim()) return alert('Введите токен');
-      setCookie(COOKIE_TOKEN, tokenEl.value.trim());
-      log('Токен сохранен в cookie');
-    };
+    /* =========================================================================
+       Тема и настройки
+       ========================================================================= */
 
-    document.getElementById('clearToken').onclick = () => {
-      deleteCookie(COOKIE_TOKEN);
-      tokenEl.value = '';
-      log('Токен удален');
-    };
-
-    document.getElementById("addChat").onclick = () => {
-      const v = chatInputEl.value.trim();
-      if (!v) return;
-      if (!chats.some(c => c.id === v)) chats.push({ id: v, selected: true });
-      chatInputEl.value = "";
-      saveChats();
-      renderChats();
-    };
-
-    document.getElementById("selectAllChats").onclick = () => {
-      chats.forEach(c => { c.selected = true; });
-      saveChats();
-      renderChats();
-    };
-
-    document.getElementById("clearSelection").onclick = () => {
-      chats.forEach(c => { c.selected = false; });
-      saveChats();
-      renderChats();
-    };
-
-    document.getElementById("clearChats").onclick = () => {
-      chats = [];
-      saveChats();
-      renderChats();
-    };
-
-    document.getElementById('addButton').onclick = () => {
-      buttons.push({ text: '', url: '', style: '' });
-      renderButtons();
-    };
-
-    document.getElementById('clearButtons').onclick = () => {
-      buttons = [];
-      renderButtons();
-    };
-
-    document.getElementById('saveTemplate').onclick = () => {
-      const name = templateNameEl.value.trim();
-      if (!name) return alert('Введите имя шаблона');
-      const payload = readFormData();
-      delete payload.photoFile;
-      delete payload.albumFiles;
-      const idx = templates.findIndex(t => t.name === name);
-      const item = { name, ...payload };
-      if (idx >= 0) templates[idx] = item;
-      else templates.push(item);
-      saveLS(LS_TEMPLATES, templates);
-      renderTemplates();
-      templateNameEl.value = '';
-      log(`Шаблон "${name}" сохранен`);
-    };
-    function randomDelayMs(minMs, maxMs) {
-      return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+    function applySettings() {
+      const theme = state.settings.theme || 'auto';
+      if (theme === 'auto') document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.setAttribute('data-theme', theme);
+      el.themeToggle.title = `Тема: ${{ auto: 'системная', light: 'светлая', dark: 'тёмная' }[theme]}`;
+      el.delayMin.value = String(state.settings.delayMin ?? 3);
+      el.delayMax.value = String(state.settings.delayMax ?? 5);
     }
 
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
+    function saveSettings() {
+      state.settings.delayMin = Math.max(0, Number(el.delayMin.value) || 0);
+      state.settings.delayMax = Math.max(state.settings.delayMin, Number(el.delayMax.value) || 0);
+      Store.set(Store.K.settings, state.settings);
     }
-    document.getElementById('sendAll').onclick = async () => {
-      statusEl.textContent = '';
-      const token = tokenEl.value.trim();
-      if (!token) return alert('Введите токен');
-      if (!chats.length) return alert('Добавьте хотя бы один чат/канал');
 
-      const selectedChats = chats.filter(c => c.selected).map(c => c.id);
-      if (!selectedChats.length) return alert('Выберите хотя бы один канал/чат для отправки');
+    /* =========================================================================
+       Панель форматирования
+       ========================================================================= */
 
-      const data = readFormData();
-      log(`Старт отправки в ${selectedChats.length} выбранных чат(ов)`);
+    function applyFormat(kind) {
+      const mode = el.parseMode.value;
+      if (!mode) return;
 
-      for (let i = 0; i < selectedChats.length; i += 1) {
-        const chatId = selectedChats[i];
+      const area = el.message;
+      const start = area.selectionStart;
+      const end = area.selectionEnd;
+      const selected = area.value.slice(start, end);
 
+      let before = '';
+      let after = '';
+
+      if (kind === 'link') {
+        const url = prompt('Ссылка:', 'https://');
+        if (!url) return;
+        if (mode === 'HTML') {
+          before = `<a href="${Markup.escapeHtml(url)}">`;
+          after = '</a>';
+        } else {
+          before = '[';
+          after = `](${url})`;
+        }
+      } else {
+        const pair = Markup.WRAPPERS[mode]?.[kind];
+        if (!pair) return;
+        [before, after] = pair;
+      }
+
+      const inserted = before + (selected || (kind === 'link' ? 'текст' : '')) + after;
+      area.setRangeText(inserted, start, end, 'end');
+      if (!selected && kind !== 'link') {
+        area.selectionStart = area.selectionEnd = start + before.length;
+      }
+      area.focus();
+      saveDraft();
+      renderPreview();
+    }
+
+    /* =========================================================================
+       Drag & drop
+       ========================================================================= */
+
+    function setupDropzone() {
+      const card = el.postCard;
+      ['dragenter', 'dragover'].forEach(evt =>
+        card.addEventListener(evt, (e) => {
+          e.preventDefault();
+          card.classList.add('dragover');
+        })
+      );
+      ['dragleave', 'drop'].forEach(evt =>
+        card.addEventListener(evt, (e) => {
+          e.preventDefault();
+          if (evt === 'dragleave' && card.contains(e.relatedTarget)) return;
+          card.classList.remove('dragover');
+        })
+      );
+
+      card.addEventListener('drop', (e) => {
+        const files = Array.from(e.dataTransfer?.files || []);
+        if (!files.length) return;
+
+        const dt = new DataTransfer();
+        if (el.mode.value === 'album' || files.length > 1) {
+          if (el.mode.value !== 'album') el.mode.value = 'album';
+          files.slice(0, LIMITS.albumMax).forEach(f => dt.items.add(f));
+          el.albumFiles.files = dt.files;
+        } else {
+          const file = files[0];
+          if (el.mode.value === 'text') {
+            el.mode.value = file.type.startsWith('video/') ? 'video'
+              : file.type.startsWith('image/') ? 'photo' : 'document';
+          }
+          dt.items.add(file);
+          el.mediaFile.files = dt.files;
+        }
+
+        syncModeFields();
+        renderPreview();
+        toast(`Добавлено файлов: ${files.length}`);
+      });
+    }
+
+    /* =========================================================================
+       Обработчики
+       ========================================================================= */
+
+    function bindEvents() {
+      // токен
+      $('saveToken').onclick = () => {
+        const value = el.token.value.trim();
+        if (!value) return toast('Введите токен', 'err');
+        Store.set(Store.K.token, value);
+        log('Токен сохранён в localStorage', 'ok');
+        toast('Токен сохранён');
+      };
+
+      $('clearToken').onclick = () => {
+        Store.remove(Store.K.token);
+        el.token.value = '';
+        el.botBadge.className = 'bot-badge';
+        el.botBadge.textContent = 'Токен не проверен';
+        log('Токен удалён', 'warn');
+      };
+
+      $('toggleTokenView').onclick = () => {
+        const shown = el.token.type === 'text';
+        el.token.type = shown ? 'password' : 'text';
+        $('toggleTokenView').textContent = shown ? 'Показать' : 'Скрыть';
+      };
+
+      $('checkToken').onclick = async () => {
+        const token = el.token.value.trim();
+        if (!token) return toast('Введите токен', 'err');
+        el.botBadge.className = 'bot-badge';
+        el.botBadge.textContent = 'Проверяем…';
         try {
-          await sendToChat(token, chatId, data);
-          log(`[OK] ${chatId}`);
+          const data = await Api.call(token, 'getMe', {}, { retries: 1 });
+          const bot = data.result || {};
+          el.botBadge.className = 'bot-badge ok';
+          el.botBadge.textContent = `@${bot.username || bot.id}`;
+          log(`Бот: ${bot.first_name || ''} @${bot.username || ''}`, 'ok');
+          Store.set(Store.K.token, token);
         } catch (e) {
-          log(`[ERR] ${chatId} -> ${e.message}`);
+          el.botBadge.className = 'bot-badge err';
+          el.botBadge.textContent = 'Токен не работает';
+          log('Проверка токена: ' + e.message, 'err');
         }
+      };
 
-        if (i < selectedChats.length - 1) {
-          const waitMs = randomDelayMs(5000, 7000);
-          log(`Пауза ${Math.round(waitMs / 1000)} сек перед следующим чатом...`);
-          await sleep(waitMs);
+      // чаты
+      $('addChat').onclick = async () => {
+        const raw = el.chatInput.value.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
+        if (!raw.length) return;
+
+        const added = [];
+        raw.forEach((id) => {
+          if (state.chats.some(c => c.id.toLowerCase() === id.toLowerCase())) return;
+          const chat = { id, title: '', type: '', selected: true };
+          state.chats.push(chat);
+          added.push(chat);
+        });
+
+        el.chatInput.value = '';
+        saveChats();
+        renderChats();
+
+        for (const chat of added) {
+          if (await fetchChatTitle(chat)) {
+            saveChats();
+            renderChats();
+          }
         }
-      }
+        renderPreview();
+      };
 
-      log('Готово');
-    };
+      el.chatInput.onkeydown = (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); $('addChat').click(); }
+      };
+
+      $('refreshChats').onclick = async () => {
+        if (!el.token.value.trim()) return toast('Сначала введите токен', 'err');
+        log('Обновляем названия чатов…');
+        for (const chat of state.chats) await fetchChatTitle(chat);
+        saveChats();
+        renderChats();
+        renderPreview();
+        log('Названия обновлены', 'ok');
+      };
+
+      $('selectAllChats').onclick = () => {
+        state.chats.forEach(c => { c.selected = true; });
+        saveChats();
+        renderChats();
+        renderPreview();
+      };
+
+      $('clearSelection').onclick = () => {
+        state.chats.forEach(c => { c.selected = false; });
+        saveChats();
+        renderChats();
+        renderPreview();
+      };
+
+      $('clearChats').onclick = () => {
+        if (state.chats.length && !confirm('Удалить все чаты из списка?')) return;
+        state.chats = [];
+        saveChats();
+        renderChats();
+        renderPreview();
+      };
+
+      // пост
+      ['input', 'change'].forEach((evt) => {
+        [el.message, el.mediaUrl, el.albumUrls, el.albumButtonsText,
+         el.optSilent, el.optProtect, el.optNoPreview, el.buttonsPerRow]
+          .forEach(node => node.addEventListener(evt, () => { saveDraft(); renderPreview(); }));
+      });
+
+      [el.mediaFile, el.albumFiles].forEach(node =>
+        node.addEventListener('change', renderPreview)
+      );
+
+      el.mode.onchange = () => { syncModeFields(); saveDraft(); renderPreview(); };
+      el.parseMode.onchange = () => { syncModeFields(); saveDraft(); renderPreview(); };
+
+      el.toolbar.querySelectorAll('[data-fmt]').forEach((btn) => {
+        btn.onclick = () => applyFormat(btn.dataset.fmt);
+      });
+
+      $('escapeSpecials').onclick = () => {
+        const area = el.message;
+        const start = area.selectionStart;
+        const end = area.selectionEnd;
+        const target = start === end ? area.value : area.value.slice(start, end);
+        const escaped = Markup.escapeMarkdownV2(target);
+        if (start === end) area.value = escaped;
+        else area.setRangeText(escaped, start, end, 'end');
+        saveDraft();
+        renderPreview();
+        toast('Спецсимволы экранированы');
+      };
+
+      // кнопки
+      $('addButton').onclick = () => {
+        state.buttons.push({ text: '', url: '', emoji: '' });
+        renderButtons();
+        syncModeFields();
+        saveDraft();
+      };
+
+      $('clearButtons').onclick = () => {
+        state.buttons = [];
+        renderButtons();
+        syncModeFields();
+        saveDraft();
+        renderPreview();
+      };
+
+      // шаблоны
+      $('saveTemplate').onclick = () => {
+        const name = el.templateName.value.trim();
+        if (!name) return toast('Введите название шаблона', 'err');
+        const item = { name, ...readDraft() };
+        const idx = state.templates.findIndex(t => t.name === name);
+        if (idx >= 0) state.templates[idx] = item;
+        else state.templates.push(item);
+        Store.set(Store.K.templates, state.templates);
+        renderTemplates();
+        el.templateName.value = '';
+        toast(`Шаблон «${name}» сохранён`);
+      };
+
+      $('exportData').onclick = exportSettings;
+      $('importData').onclick = () => el.importFile.click();
+      el.importFile.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) importSettings(file);
+        e.target.value = '';
+      };
+
+      // отправка
+      el.sendAll.onclick = sendAll;
+      el.cancelSend.onclick = () => {
+        state.controller?.abort();
+        log('Запрошена отмена…', 'warn');
+      };
+      $('clearLog').onclick = () => { el.status.textContent = ''; };
+      [el.delayMin, el.delayMax].forEach(node => node.addEventListener('change', saveSettings));
+
+      // тема
+      el.themeToggle.onclick = () => {
+        const order = ['auto', 'light', 'dark'];
+        const next = order[(order.indexOf(state.settings.theme || 'auto') + 1) % order.length];
+        state.settings.theme = next;
+        Store.set(Store.K.settings, state.settings);
+        applySettings();
+        toast(`Тема: ${{ auto: 'системная', light: 'светлая', dark: 'тёмная' }[next]}`);
+      };
+
+      // горячая клавиша
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          sendAll();
+        }
+      });
+
+      window.addEventListener('beforeunload', (e) => {
+        if (state.sending) { e.preventDefault(); e.returnValue = ''; }
+      });
+    }
+
+    /* =========================================================================
+       Старт
+       ========================================================================= */
 
     function init() {
-      tokenEl.value = decodeURIComponent(getCookie(COOKIE_TOKEN) || '');
-      chats = normalizeChats(loadLS(LS_CHATS, []));
-      templates = loadLS(LS_TEMPLATES, []);
+      Store.migrate();
+
+      state.settings = { theme: 'auto', delayMin: 3, delayMax: 5, ...Store.get(Store.K.settings, {}) };
+      state.chats = normalizeChats(Store.get(Store.K.chats, []));
+      state.templates = Store.get(Store.K.templates, []) || [];
+      el.token.value = Store.get(Store.K.token, '') || '';
+
+      applySettings();
+      applyDraft(Store.get(Store.K.draft, { mode: 'text', parse_mode: 'HTML' }));
       renderChats();
-      renderButtons();
       renderTemplates();
-      log('Страница готова');
+      setupDropzone();
+      bindEvents();
+      renderPreview();
+
+      if (location.protocol !== 'file:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        el.hostWarning.classList.add('show');
+      }
+
+      log('Готово к работе', 'ok');
+      if (el.token.value) log('Токен загружен из localStorage — нажмите «Проверить бота»');
     }
 
     init();
+  })();
   </script>
 </body>
 </html>
-
