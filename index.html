@@ -170,6 +170,10 @@
       flex: none;
     }
     .h2-tail { margin-left: auto; font-size: 12px; font-weight: 400; color: var(--muted); }
+    @media (max-width: 560px) {
+      .card > h2 { flex-wrap: wrap; }
+      .h2-tail { margin-left: 0; width: 100%; }
+    }
 
     /* ---------- формы ---------- */
     .row { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -353,6 +357,93 @@
     }
     .preview-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
 
+    /* ---------- блок доверия ---------- */
+    .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 760px) { .facts { grid-template-columns: minmax(0, 1fr); } }
+    .fact {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px 12px;
+    }
+    .fact .ico { font-size: 18px; line-height: 1.3; flex: none; }
+    .fact b { display: block; font-size: 13.5px; margin-bottom: 2px; }
+    .fact span { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+
+    /* ---------- справка ---------- */
+    details.faq {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    details.faq > summary {
+      cursor: pointer;
+      padding: 11px 13px;
+      font-size: 14px;
+      font-weight: 600;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    details.faq > summary::-webkit-details-marker { display: none; }
+    details.faq > summary::before {
+      content: '▸';
+      color: var(--accent);
+      font-size: 13px;
+      transition: transform .15s;
+      flex: none;
+    }
+    details.faq[open] > summary::before { transform: rotate(90deg); }
+    details.faq > summary:hover { background: var(--surface-3); }
+    .faq-body { padding: 0 13px 13px 33px; font-size: 13.5px; line-height: 1.6; color: var(--text); }
+    .faq-body p { margin: 0 0 9px; }
+    .faq-body ol, .faq-body ul { margin: 0 0 9px; padding-left: 20px; }
+    .faq-body li { margin-bottom: 5px; }
+    .faq-body li::marker { color: var(--muted); }
+    .faq-body a { color: var(--info); }
+    .faq-body .dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin-bottom: 9px; }
+    .faq-body .dl dt { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; color: var(--danger); }
+    .faq-body .dl dd { margin: 0; color: var(--muted); }
+
+    /* ---------- поддержка и подвал ---------- */
+    .support-links { display: flex; flex-direction: column; gap: 8px; }
+    .support-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color .15s, background .15s;
+    }
+    .support-link:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .support-link .ico { font-size: 19px; flex: none; }
+    .support-link b { display: block; font-size: 13.5px; }
+    .support-link span { font-size: 12px; color: var(--muted); }
+    .support-link .arrow { margin-left: auto; color: var(--muted); }
+
+    .page-footer {
+      margin-top: 8px;
+      padding: 16px 4px 4px;
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      gap: 8px 18px;
+      flex-wrap: wrap;
+      align-items: center;
+      border-top: 1px solid var(--border);
+    }
+    .page-footer a { color: var(--info); }
+
     /* ---------- отправка ---------- */
     .progress { height: 7px; background: var(--surface-3); border-radius: 999px; overflow: hidden; margin-top: 12px; display: none; }
     .progress.show { display: block; }
@@ -413,6 +504,7 @@
         <span class="brand-sub">Отправка постов через Bot API прямо из браузера, без backend</span>
       </h1>
       <span id="botBadge" class="bot-badge">Токен не проверен</span>
+      <button id="helpJump" class="ghost">Справка</button>
       <button id="themeToggle" class="ghost icon" title="Переключить тему" aria-label="Переключить тему">🌗</button>
     </header>
 
@@ -421,6 +513,36 @@
       хостинге любой посторонний скрипт на странице получит к нему доступ. Для работы с реальным
       ботом скачайте <code>index.html</code> и откройте его локально.
     </div>
+
+    <section class="card">
+      <h2>Всё работает у вас на компьютере<span class="h2-tail">никакого сервера в середине</span></h2>
+      <div class="facts">
+        <div class="fact">
+          <span class="ico">🗄️</span>
+          <div>
+            <b>Нет сервера — некуда утекать</b>
+            <span>Это один HTML-файл. У проекта нет backend и базы данных, поэтому ваш токен
+            и списки каналов физически негде хранить, кроме вашего браузера.</span>
+          </div>
+        </div>
+        <div class="fact">
+          <span class="ico">📡</span>
+          <div>
+            <b>Единственный адрес в сети</b>
+            <span>Страница обращается только к <code>api.telegram.org</code> — напрямую,
+            как это делает ваш Telegram. Ни аналитики, ни счётчиков, ни внешних библиотек.</span>
+          </div>
+        </div>
+        <div class="fact">
+          <span class="ico">🔍</span>
+          <div>
+            <b>Это можно проверить</b>
+            <span>Нажмите F12 → вкладка Network и отправьте пост: вы увидите все запросы,
+            которые делает страница. Исходный код открыт целиком.</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <div class="layout">
       <div class="main">
@@ -602,6 +724,133 @@
           <div id="status" class="status" aria-live="polite"></div>
           <p class="muted">Горячая клавиша: <code>Ctrl</code>/<code>Cmd</code> + <code>Enter</code>. При ошибке 429 пауза берётся из ответа Telegram, попытка повторяется автоматически.</p>
         </section>
+
+        <section class="card" id="helpCard">
+          <h2>Справка<span class="h2-tail">всё, что нужно для старта</span></h2>
+
+          <details class="faq" open>
+            <summary>С чего начать: три шага</summary>
+            <div class="faq-body">
+              <ol>
+                <li><b>Создайте бота.</b> Откройте в Telegram <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>,
+                отправьте команду <code>/newbot</code> и придумайте имя. В ответ придёт токен вида
+                <code>123456789:AAH…</code> — это пароль от бота, скопируйте его.</li>
+                <li><b>Добавьте бота в канал администратором.</b> В настройках канала:
+                «Администраторы» → «Добавить администратора» → найдите своего бота →
+                оставьте право <b>«Публикация сообщений»</b>. Без прав администратора бот
+                писать в канал не сможет.</li>
+                <li><b>Вставьте токен в шаге 1</b> и нажмите «Проверить бота». Если появилось
+                имя бота — всё готово. Добавьте канал в шаге 2 и отправляйте пост.</li>
+              </ol>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Какой идентификатор канала указывать</summary>
+            <div class="faq-body">
+              <p><b>Публичный канал или группа.</b> Просто <code>@имя_канала</code> — то, что
+              стоит в ссылке <code>t.me/имя_канала</code>.</p>
+              <p><b>Приватный канал.</b> Нужен числовой ID вида <code>-1001234567890</code>.
+              Самый простой способ: перешлите любое сообщение из канала боту
+              <a href="https://t.me/getmyid_bot" target="_blank" rel="noopener">@getmyid_bot</a> —
+              он покажет ID. Другой вариант: откройте канал в
+              <a href="https://web.telegram.org" target="_blank" rel="noopener">web.telegram.org</a>
+              и возьмите число из адресной строки, добавив спереди <code>-100</code>.</p>
+              <p><b>Личный чат.</b> Ваш собственный ID можно узнать у того же бота. Учтите:
+              бот может писать вам, только если вы первым нажали у него «Старт».</p>
+              <p>После добавления нажмите «Обновить названия» — страница подтянет имена
+              каналов через Telegram и заодно проверит, что бот действительно имеет доступ.</p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Форматирование текста: HTML или MarkdownV2</summary>
+            <div class="faq-body">
+              <p>Кнопки на панели над полем ввода сами вставляют нужную разметку — выделите
+              текст и нажмите нужную кнопку. Результат сразу виден в предпросмотре справа.</p>
+              <p><b>HTML</b> проще и прощает больше: <code>&lt;b&gt;жирный&lt;/b&gt;</code>,
+              <code>&lt;i&gt;курсив&lt;/i&gt;</code>, <code>&lt;a href="…"&gt;ссылка&lt;/a&gt;</code>.
+              Начинающим рекомендуется именно он.</p>
+              <p><b>MarkdownV2</b> требует экранировать служебные символы обратным слэшем:
+              точку, дефис, скобки и другие. Если Telegram ругается на разметку — выделите
+              проблемный фрагмент и нажмите «\ Экранировать».</p>
+              <p><b>Без форматирования</b> — текст уйдёт ровно таким, как написан, включая
+              любые угловые скобки и звёздочки.</p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Что означают ошибки при отправке</summary>
+            <div class="faq-body">
+              <dl class="dl">
+                <dt>chat not found</dt>
+                <dd>Опечатка в имени канала, либо для приватного канала указан
+                <code>@username</code> вместо числового <code>-100…</code>.</dd>
+                <dt>not enough rights</dt>
+                <dd>Бот в канале есть, но без права публиковать сообщения. Дайте ему права
+                администратора.</dd>
+                <dt>bot was kicked</dt>
+                <dd>Бота удалили из канала — добавьте заново.</dd>
+                <dt>unauthorized</dt>
+                <dd>Токен неверный или отозван. Получите новый у @BotFather.</dd>
+                <dt>can't parse entities</dt>
+                <dd>Ошибка в разметке: незакрытый тег в HTML или неэкранированный символ
+                в MarkdownV2.</dd>
+                <dt>Too Many Requests</dt>
+                <dd>Сработал лимит Telegram. Страница подождёт нужное время и повторит
+                отправку сама. Если повторяется часто — увеличьте паузу в шаге 6.</dd>
+                <dt>Сеть недоступна</dt>
+                <dd>Нет интернета либо доступ к <code>api.telegram.org</code> заблокирован —
+                в этом случае поможет VPN.</dd>
+              </dl>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Что умеет и чего не умеет Telegram</summary>
+            <div class="faq-body">
+              <p>Часть ограничений — не недоработка страницы, а правила самого Telegram:</p>
+              <ul>
+                <li><b>Кнопки нельзя покрасить.</b> В Bot API у кнопки есть только текст
+                и ссылка, поля цвета не существует. Поэтому здесь предлагаются
+                эмодзи-маркеры — единственный работающий способ выделить кнопку.</li>
+                <li><b>Альбом не носит кнопки.</b> К группе фото и видео кнопки не крепятся,
+                поэтому они уходят отдельным сообщением сразу после альбома.</li>
+                <li><b>Альбом — от 2 до 10 файлов.</b></li>
+                <li><b>Длина текста:</b> 4096 символов для обычного поста и 1024 для подписи
+                к фото или видео. Счётчик под полем показывает текущий лимит.</li>
+                <li><b>Размер файла при загрузке с диска — до 50 МБ.</b> Файл побольше
+                проще выложить куда-нибудь и указать ссылкой.</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Где хранятся мои данные и что видит автор страницы</summary>
+            <div class="faq-body">
+              <p><b>Автор не видит ничего.</b> Здесь нечему видеть: страница не отправляет
+              данные никуда, кроме серверов Telegram. Нет ни аналитики, ни сбора статистики,
+              ни подключения внешних библиотек — весь код лежит в одном файле, который
+              вы скачали.</p>
+              <p><b>Что и где лежит.</b> Токен, список каналов, шаблоны и черновик хранятся
+              в <code>localStorage</code> — это встроенное хранилище браузера на вашем
+              компьютере. Данные привязаны к вашему браузеру и не покидают его.</p>
+              <p><b>Токен уходит только в Telegram.</b> Он нужен в адресе запроса к Bot API —
+              иначе Telegram не поймёт, от какого бота сообщение. Больше он не передаётся
+              никому.</p>
+              <p><b>Экспорт настроек не содержит токена</b> — файл можно спокойно переносить
+              между компьютерами.</p>
+              <p><b>Как всё стереть:</b> нажмите «Очистить» рядом с токеном и «Очистить
+              список» в разделе получателей. Полностью очистить хранилище можно через
+              настройки браузера — удалением данных сайта.</p>
+              <p><b>Разумные меры предосторожности:</b> открывайте страницу с локального
+              файла, а не с чужого сайта; не пользуйтесь ей на общем или рабочем компьютере,
+              где к браузеру есть доступ у других; если токен всё же засветился —
+              отзовите его командой <code>/revoke</code> у @BotFather, старый мгновенно
+              перестанет работать.</p>
+            </div>
+          </details>
+        </section>
       </div>
 
       <aside class="side">
@@ -620,8 +869,40 @@
           </div>
           <p id="pvNote" class="preview-note"></p>
         </section>
+
+        <section class="card">
+          <h2><span aria-hidden="true">💖</span> Поддержка</h2>
+          <p class="muted" style="margin-top:0;margin-bottom:12px;">
+            Страница бесплатная и без рекламы. Если она вам пригодилась, автора можно поддержать:
+          </p>
+          <div class="support-links">
+            <a class="support-link" href="https://pay.cloudtips.ru/p/894f4248" target="_blank" rel="noopener">
+              <span class="ico">💳</span>
+              <span>
+                <b>Рублём</b>
+                <span>CloudTips — банковская карта</span>
+              </span>
+              <span class="arrow">↗</span>
+            </a>
+            <a class="support-link" href="https://t.me/send?start=IVCyYmLsx06p" target="_blank" rel="noopener">
+              <span class="ico">🪙</span>
+              <span>
+                <b>Криптой</b>
+                <span>Telegram-кошелёк</span>
+              </span>
+              <span class="arrow">↗</span>
+            </a>
+          </div>
+        </section>
       </aside>
     </div>
+
+    <footer class="page-footer">
+      <span>Telegram Post Sender — работает локально, без сервера.</span>
+      <a href="https://github.com/Dosash" target="_blank" rel="noopener">GitHub автора</a>
+      <a href="https://dosash.ru" target="_blank" rel="noopener">dosash.ru</a>
+      <a href="https://pay.cloudtips.ru/p/894f4248" target="_blank" rel="noopener">Поддержать</a>
+    </footer>
   </div>
 
   <div id="toasts" aria-live="polite"></div>
@@ -2037,6 +2318,13 @@
       };
       $('clearLog').onclick = () => { el.status.textContent = ''; };
       [el.delayMin, el.delayMax].forEach(node => node.addEventListener('change', saveSettings));
+
+      // справка
+      $('helpJump').onclick = () => {
+        const card = $('helpCard');
+        card.querySelector('details').open = true;
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
 
       // тема
       el.themeToggle.onclick = () => {
