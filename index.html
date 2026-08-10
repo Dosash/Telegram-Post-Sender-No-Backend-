@@ -236,6 +236,13 @@
     }
     .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
 
+    .url-row { display: flex; gap: 8px; align-items: center; }
+    .url-row input { flex: 1; min-width: 0; }
+    .url-row button { flex: none; white-space: nowrap; }
+    .hint.ok { color: var(--accent); }
+    .hint.err { color: var(--danger); }
+    .hint.busy { color: var(--info); }
+
     .toggle-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; }
     .toggle { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text); cursor: pointer; }
     .toggle input { margin: 0; }
@@ -528,9 +535,10 @@
         <div class="fact">
           <span class="ico">📡</span>
           <div>
-            <b>Единственный адрес в сети</b>
-            <span>Страница обращается только к <code>api.telegram.org</code> — напрямую,
-            как это делает ваш Telegram. Ни аналитики, ни счётчиков, ни внешних библиотек.</span>
+            <b>Только Telegram и ваши ссылки</b>
+            <span>Страница обращается к <code>api.telegram.org</code> напрямую — и к тем
+            адресам картинок, которые вы сами укажете. Ни аналитики, ни счётчиков,
+            ни внешних библиотек.</span>
           </div>
         </div>
         <div class="fact">
@@ -631,11 +639,16 @@
           <div class="row" id="fieldSingleMedia" hidden>
             <div class="col">
               <label for="mediaUrl">URL медиафайла</label>
-              <input id="mediaUrl" placeholder="https://.../image.jpg" />
+              <div class="url-row">
+                <input id="mediaUrl" placeholder="https://.../image.jpg" />
+                <button id="fetchMediaUrl" class="ghost" title="Скачать по ссылке в браузер и отправить файлом">⬇ Подгрузить</button>
+              </div>
+              <p id="fetchMediaStatus" class="hint"></p>
             </div>
             <div class="col">
               <label for="mediaFile">…или файл с диска</label>
               <input id="mediaFile" type="file" />
+              <p class="hint">Можно вставить картинку из буфера обмена: <code>Ctrl</code>/<code>Cmd</code> + <code>V</code>.</p>
             </div>
           </div>
 
@@ -643,6 +656,10 @@
             <div class="col">
               <label for="albumUrls">URL картинок и видео, по одному в строке</label>
               <textarea id="albumUrls" placeholder="https://.../1.jpg&#10;https://.../2.mp4"></textarea>
+              <div class="url-row" style="margin-top:8px;">
+                <button id="fetchAlbumUrls" class="ghost">⬇ Подгрузить все ссылки</button>
+              </div>
+              <p id="fetchAlbumStatus" class="hint"></p>
             </div>
             <div class="col">
               <label for="albumFiles">…или файлы с диска</label>
@@ -764,6 +781,31 @@
           </details>
 
           <details class="faq">
+            <summary>Картинка по ссылке и кнопка «Подгрузить»</summary>
+            <div class="faq-body">
+              <p>Ссылку на картинку можно просто вставить в поле — дальше её скачает сам
+              Telegram, ничего нажимать не нужно. Так работает по умолчанию.</p>
+              <p><b>Когда нужна кнопка «Подгрузить».</b> Иногда Telegram не может забрать
+              файл по ссылке: сайт закрывает доступ ботам, отдаёт картинку слишком долго
+              или файл больше 5 МБ — это лимит Telegram для фото по ссылке. Тогда нажмите
+              «⬇ Подгрузить»: браузер скачает картинку сам, и она уйдёт в Telegram уже
+              файлом. Лимит в этом случае — 10 МБ для фото и 50 МБ для остального.</p>
+              <p><b>Почему иногда не срабатывает.</b> Браузеру разрешено показывать чужие
+              картинки, но не читать их содержимое — если сайт-источник этого явно не
+              разрешил. Обойти запрет можно было бы только через промежуточный сервер,
+              то есть отправляя ваши файлы через чужие руки. Поэтому здесь такого нет:
+              если скачать не вышло, страница честно скажет об этом и оставит ссылку —
+              её заберёт Telegram, как и раньше.</p>
+              <p><b>В альбоме</b> кнопка «Подгрузить все ссылки» пройдёт по списку: что
+              удалось — станет файлами, остальное останется ссылками. Смешивать можно
+              как угодно.</p>
+              <p><b>Скриншот из буфера.</b> Скопировали картинку — нажмите
+              <code>Ctrl</code>/<code>Cmd</code> + <code>V</code> на странице, она сразу
+              подставится в пост. Файлы также можно перетащить мышью.</p>
+            </div>
+          </details>
+
+          <details class="faq">
             <summary>Форматирование текста: HTML или MarkdownV2</summary>
             <div class="faq-body">
               <p>Кнопки на панели над полем ввода сами вставляют нужную разметку — выделите
@@ -832,6 +874,9 @@
               данные никуда, кроме серверов Telegram. Нет ни аналитики, ни сбора статистики,
               ни подключения внешних библиотек — весь код лежит в одном файле, который
               вы скачали.</p>
+              <p><b>Единственное исключение — кнопка «Подгрузить».</b> Нажав её, вы просите
+              браузер скачать картинку с того адреса, который вы сами вписали. Запрос идёт
+              напрямую на этот адрес, без посредников, и только по вашему нажатию.</p>
               <p><b>Что и где лежит.</b> Токен, список каналов, шаблоны и черновик хранятся
               в <code>localStorage</code> — это встроенное хранилище браузера на вашем
               компьютере. Данные привязаны к вашему браузеру и не покидают его.</p>
@@ -1076,7 +1121,8 @@
         [/not enough rights|CHAT_WRITE_FORBIDDEN|have no rights/i, 'у бота нет прав на публикацию'],
         [/can't parse entities/i, 'ошибка разметки — проверьте теги или экранирование'],
         [/can't parse inline keyboard|BUTTON_URL_INVALID/i, 'некорректная ссылка в кнопке'],
-        [/wrong file identifier|failed to get HTTP URL content|WEBPAGE_CURL_FAILED/i, 'Telegram не смог скачать файл по URL'],
+        [/failed to get HTTP URL content|WEBPAGE_CURL_FAILED/i, 'Telegram не смог скачать файл по ссылке — попробуйте кнопку «Подгрузить» рядом с полем URL'],
+        [/wrong file identifier/i, 'Telegram не принял ссылку или идентификатор файла'],
         [/message is too long/i, 'текст длиннее лимита Telegram'],
         [/unauthorized/i, 'токен неверен или отозван'],
         [/PHOTO_INVALID_DIMENSIONS|IMAGE_PROCESS_FAILED/i, 'Telegram не принял изображение']
@@ -1846,7 +1892,12 @@
         if (text) payload.caption = text;
         if (draft.parse_mode) payload.parse_mode = draft.parse_mode;
         if (markup) payload.reply_markup = markup;
-        await Api.call(token, method, payload, opts);
+        const res = await Api.call(token, method, payload, opts);
+        // ссылку Telegram тоже скачивает один раз: дальше идёт готовый file_id
+        if (!cachedId) {
+          const id = extractFileId(res.result);
+          if (id) uploaded.set('single', id);
+        }
         return;
       }
 
@@ -1893,9 +1944,10 @@
           }, opts);
         }
 
+        // и файлы, и ссылки запоминаем по file_id — следующим чатам достанется он
         const messages = Array.isArray(res.result) ? res.result : [];
         prepared.forEach((item, i) => {
-          if (!item.file) return;
+          if (item.cachedId) return;
           const id = extractFileId(messages[i]);
           if (id) uploaded.set('album:' + i, id);
         });
@@ -2088,11 +2140,190 @@
     }
 
     /* =========================================================================
-       Drag & drop
+       Приём файлов: drag & drop, буфер обмена, загрузка по ссылке
        ========================================================================= */
 
-    function setupDropzone() {
+    /** Кладёт файлы в подходящее поле и подстраивает режим отправки. */
+    function attachFiles(files, { append = false } = {}) {
+      if (!files.length) return 0;
+
+      const dt = new DataTransfer();
+
+      if (el.mode.value === 'album' || files.length > 1) {
+        if (el.mode.value !== 'album') el.mode.value = 'album';
+        if (append) Array.from(el.albumFiles.files || []).forEach(f => dt.items.add(f));
+        files.forEach(f => dt.items.add(f));
+        while (dt.items.length > LIMITS.albumMax) dt.items.remove(dt.items.length - 1);
+        el.albumFiles.files = dt.files;
+      } else {
+        const file = files[0];
+        if (el.mode.value === 'text') {
+          el.mode.value = file.type.startsWith('video/') ? 'video'
+            : file.type.startsWith('image/') ? 'photo' : 'document';
+        }
+        dt.items.add(file);
+        el.mediaFile.files = dt.files;
+      }
+
+      syncModeFields();
+      saveDraft();
+      renderPreview();
+      return dt.items.length;
+    }
+
+    /**
+     * Скачивает файл по ссылке средствами браузера.
+     *
+     * Работает только если сервер-источник разрешает кросс-доменное чтение
+     * (заголовок Access-Control-Allow-Origin). Без backend обойти это нельзя:
+     * картинку можно показать в <img>, но прочитать её байты — нет. Если
+     * источник запрещает, вызывающий код оставляет ссылку как есть, и файл
+     * скачивает сам Telegram.
+     */
+    async function downloadToFile(url) {
+      if (!/^https?:\/\//i.test(url)) throw new Error('поддерживаются только http и https');
+
+      let res;
+      try {
+        res = await fetch(url, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' });
+      } catch {
+        throw new Error('источник не разрешает браузеру читать файл');
+      }
+      if (!res.ok) throw new Error(`источник ответил HTTP ${res.status}`);
+
+      const blob = await res.blob();
+      if (!blob.size) throw new Error('источник вернул пустой файл');
+
+      const name = fileNameFromUrl(url, blob.type);
+      return new File([blob], name, { type: blob.type || guessMimeByName(name) });
+    }
+
+    function fileNameFromUrl(url, mime) {
+      let base = '';
+      try {
+        const last = new URL(url, location.href).pathname.split('/').filter(Boolean).pop();
+        if (last) base = decodeURIComponent(last);
+      } catch { /* остаётся пустым — подставим ниже */ }
+
+      base = (base || 'file').replace(/[\\/:*?"<>|]/g, '_').slice(0, 80);
+      if (!/\.[a-z0-9]{2,5}$/i.test(base)) base += '.' + extByMime(mime);
+      return base;
+    }
+
+    function extByMime(mime) {
+      return {
+        'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif',
+        'image/webp': 'webp', 'video/mp4': 'mp4', 'video/quicktime': 'mov',
+        'application/pdf': 'pdf'
+      }[mime] || 'bin';
+    }
+
+    function guessMimeByName(name) {
+      const ext = (name.split('.').pop() || '').toLowerCase();
+      return {
+        jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+        webp: 'image/webp', mp4: 'video/mp4', mov: 'video/quicktime'
+      }[ext] || '';
+    }
+
+    function modeForFile(file) {
+      const type = file.type || guessMimeByName(file.name);
+      if (type.startsWith('video/')) return 'video';
+      if (type.startsWith('image/')) return 'photo';
+      return 'document';
+    }
+
+    function isPhotoOrVideo(file) {
+      const type = file.type || guessMimeByName(file.name);
+      return type.startsWith('image/') || type.startsWith('video/');
+    }
+
+    function setHint(node, text, kind) {
+      node.textContent = text;
+      node.className = 'hint' + (kind ? ' ' + kind : '');
+    }
+
+    /** Подгружает один URL и превращает его в локальный файл. */
+    async function fetchSingleUrl() {
+      const url = el.mediaUrl.value.trim();
+      const status = $('fetchMediaStatus');
+      if (!url) return setHint(status, 'Сначала вставьте ссылку', 'err');
+
+      if (!/^https?:\/\//i.test(url)) {
+        return setHint(status, 'Ссылка должна начинаться с http:// или https://', 'err');
+      }
+
+      const btn = $('fetchMediaUrl');
+      btn.disabled = true;
+      setHint(status, 'Скачиваем…', 'busy');
+
+      try {
+        const file = await downloadToFile(url);
+        const wanted = modeForFile(file);
+        if (el.mode.value !== wanted) el.mode.value = wanted;
+
+        attachFiles([file]);
+        el.mediaUrl.value = '';
+        setHint(status, `Готово: ${file.name} · ${formatBytes(file.size)}`, 'ok');
+
+        if (wanted === 'photo' && file.size > 10 * 1024 * 1024) {
+          setHint(status, `${file.name} · ${formatBytes(file.size)} — больше 10 МБ, как фото Telegram не примет. Выберите режим «Файл».`, 'err');
+        } else if (file.size > 50 * 1024 * 1024) {
+          setHint(status, `${file.name} · ${formatBytes(file.size)} — больше 50 МБ, Telegram не примет такую загрузку.`, 'err');
+        }
+      } catch (e) {
+        setHint(status, `Не вышло: ${e.message}. Ссылка останется в поле — файл скачает сам Telegram.`, 'err');
+      } finally {
+        btn.disabled = false;
+        saveDraft();
+        renderPreview();
+      }
+    }
+
+    /** Подгружает список URL альбома. Что удалось — станет файлами, остальное останется ссылками. */
+    async function fetchAlbumUrlList() {
+      const urls = el.albumUrls.value.split('\n').map(s => s.trim()).filter(Boolean);
+      const status = $('fetchAlbumStatus');
+      if (!urls.length) return setHint(status, 'Сначала добавьте ссылки', 'err');
+
+      const btn = $('fetchAlbumUrls');
+      btn.disabled = true;
+
+      const loaded = [];
+      const failed = [];
+      const wrongType = [];
+
+      for (let i = 0; i < urls.length; i += 1) {
+        setHint(status, `Скачиваем ${i + 1} из ${urls.length}…`, 'busy');
+        try {
+          const file = await downloadToFile(urls[i]);
+          // в sendMediaGroup Telegram принимает только фото и видео
+          if (isPhotoOrVideo(file)) loaded.push(file);
+          else wrongType.push(file.name);
+        } catch {
+          failed.push(urls[i]);
+        }
+      }
+
+      if (loaded.length) attachFiles(loaded, { append: true });
+      el.albumUrls.value = failed.join('\n');
+
+      const notes = [];
+      if (loaded.length) notes.push(`подгружено ${loaded.length}`);
+      if (failed.length) notes.push(`осталось ссылками ${failed.length} — их скачает Telegram`);
+      if (wrongType.length) notes.push(`пропущено не фото и не видео: ${wrongType.join(', ')}`);
+
+      const kind = loaded.length ? (failed.length || wrongType.length ? 'busy' : 'ok') : 'err';
+      setHint(status, notes.length ? notes.join('; ') : 'Скачать не удалось — источники не разрешают', kind);
+
+      btn.disabled = false;
+      saveDraft();
+      renderPreview();
+    }
+
+    function setupFileIntake() {
       const card = el.postCard;
+
       ['dragenter', 'dragover'].forEach(evt =>
         card.addEventListener(evt, (e) => {
           e.preventDefault();
@@ -2110,25 +2341,18 @@
       card.addEventListener('drop', (e) => {
         const files = Array.from(e.dataTransfer?.files || []);
         if (!files.length) return;
-
-        const dt = new DataTransfer();
-        if (el.mode.value === 'album' || files.length > 1) {
-          if (el.mode.value !== 'album') el.mode.value = 'album';
-          files.slice(0, LIMITS.albumMax).forEach(f => dt.items.add(f));
-          el.albumFiles.files = dt.files;
-        } else {
-          const file = files[0];
-          if (el.mode.value === 'text') {
-            el.mode.value = file.type.startsWith('video/') ? 'video'
-              : file.type.startsWith('image/') ? 'photo' : 'document';
-          }
-          dt.items.add(file);
-          el.mediaFile.files = dt.files;
-        }
-
-        syncModeFields();
-        renderPreview();
+        attachFiles(files);
         toast(`Добавлено файлов: ${files.length}`);
+      });
+
+      // вставка картинки из буфера обмена — удобно для скриншотов
+      document.addEventListener('paste', (e) => {
+        const files = Array.from(e.clipboardData?.files || [])
+          .filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
+        if (!files.length) return;
+        e.preventDefault();
+        attachFiles(files, { append: el.mode.value === 'album' });
+        toast(files.length === 1 ? 'Картинка вставлена из буфера' : `Вставлено файлов: ${files.length}`);
       });
     }
 
@@ -2252,6 +2476,12 @@
         node.addEventListener('change', renderPreview)
       );
 
+      $('fetchMediaUrl').onclick = fetchSingleUrl;
+      $('fetchAlbumUrls').onclick = fetchAlbumUrlList;
+      el.mediaUrl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); fetchSingleUrl(); }
+      });
+
       el.mode.onchange = () => { syncModeFields(); saveDraft(); renderPreview(); };
       el.parseMode.onchange = () => { syncModeFields(); saveDraft(); renderPreview(); };
 
@@ -2365,7 +2595,7 @@
       applyDraft(Store.get(Store.K.draft, { mode: 'text', parse_mode: 'HTML' }));
       renderChats();
       renderTemplates();
-      setupDropzone();
+      setupFileIntake();
       bindEvents();
       renderPreview();
 
