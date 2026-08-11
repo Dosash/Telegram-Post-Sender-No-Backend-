@@ -258,3 +258,7 @@ HTML, CSS, vanilla JavaScript, Telegram Bot API. Никаких зависимо
 - Владелец репозитория: [Dosash.ru](https://dosash.ru) · [GitHub](https://github.com/Dosash)
 - Первая версия страницы реализована с помощью OpenAI Codex (GPT-5) по техническому заданию владельца.
 - Переработка: аудит, исправление дефектов Bot API, новые возможности и документация — Claude (Anthropic).
+
+## Лицензия
+
+MIT License. Подробности в [LICENSE](LICENSE).
